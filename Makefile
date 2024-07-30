@@ -83,7 +83,7 @@ gitignore:
 init_localpackage:
 ifneq (${localpackage},)
 	mkdir ./src/${localpackage}
-	echo "package ${localpackage}" > ./src/${localpackage}/${localpackage}.go
+#	echo "package ${localpackage}" > ./src/${localpackage}/${localpackage}.go
 	echo "package ${localpackage}" > ./src/${localpackage}/const.go
 	echo "package ${localpackage}" > ./src/${localpackage}/errors.go
 	echo "package ${localpackage}" > ./src/${localpackage}/func.go
