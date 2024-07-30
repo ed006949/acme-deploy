@@ -66,16 +66,13 @@ func MustX509KeyPair(certPEMBlock, keyPEMBlock []byte) *Certificate {
 	}
 }
 
-func X509KeyPair(certPEMBlock []byte, keyPEMBlock []byte) (*Certificate, error) {
+func X509KeyPair(certPEMBlock []byte, keyPEMBlock []byte) (outbound *Certificate, err error) {
 	var (
-		err error
-
-		fail = func(err error) (*Certificate, error) { return nil, err }
-
 		certDERBlock *pem.Block
 		keyDERBlock  *pem.Block
-		cert         = new(Certificate)
+		interimCert  *x509.Certificate
 	)
+	outbound = new(Certificate)
 
 	func() {
 		for {
@@ -85,27 +82,27 @@ func X509KeyPair(certPEMBlock []byte, keyPEMBlock []byte) (*Certificate, error) 
 			case certDERBlock == nil:
 				return
 			case certDERBlock.Type == "CERTIFICATE":
-				cert.CertificatesDER = append(
-					cert.CertificatesDER,
+				outbound.CertificatesDER = append(
+					outbound.CertificatesDER,
 					certDERBlock.Bytes,
 				)
-				cert.CertificatesRawPEM = append(
-					cert.CertificatesRawPEM,
+				outbound.CertificatesRawPEM = append(
+					outbound.CertificatesRawPEM,
 					[]byte(base64.RawStdEncoding.EncodeToString(certDERBlock.Bytes)),
 				)
 
 				switch {
-				case len(cert.CertificatesDER) > 1:
-					cert.CertificateCAChainDER = append(cert.CertificateCAChainDER, certDERBlock.Bytes...)
+				case len(outbound.CertificatesDER) > 1:
+					outbound.CertificateCAChainDER = append(outbound.CertificateCAChainDER, certDERBlock.Bytes...)
 				}
 			}
 		}
 	}()
 	switch {
-	case len(cert.CertificatesDER) == 0:
-		return fail(errors.New("tls: failed to find any \"CERTIFICATE\" PEM block"))
+	case len(outbound.CertificatesDER) == 0:
+		return nil, errors.New("tls: failed to find any \"CERTIFICATE\" PEM block")
 	}
-	cert.CertificateCAChainRawPEM = []byte(base64.RawStdEncoding.EncodeToString(cert.CertificateCAChainDER))
+	outbound.CertificateCAChainRawPEM = []byte(base64.RawStdEncoding.EncodeToString(outbound.CertificateCAChainDER))
 
 	func() {
 		for {
@@ -115,61 +112,61 @@ func X509KeyPair(certPEMBlock []byte, keyPEMBlock []byte) (*Certificate, error) 
 			case keyDERBlock == nil:
 				return
 			case keyDERBlock.Type == "PRIVATE KEY" || strings.HasSuffix(keyDERBlock.Type, " PRIVATE KEY"):
-				cert.PrivateKeyDER = keyDERBlock.Bytes
-				cert.PrivateKeyRawPEM = []byte(base64.RawStdEncoding.EncodeToString(cert.PrivateKeyDER))
+				outbound.PrivateKeyDER = keyDERBlock.Bytes
+				outbound.PrivateKeyRawPEM = []byte(base64.RawStdEncoding.EncodeToString(outbound.PrivateKeyDER))
 			}
 		}
 	}()
 	switch {
-	case len(cert.PrivateKeyDER) == 0:
-		return fail(errors.New("tls: failed to find any \"PRIVATE KEY\" PEM block"))
+	case len(outbound.PrivateKeyDER) == 0:
+		return nil, errors.New("tls: failed to find any \"PRIVATE KEY\" PEM block")
 	}
 
-	for _, b := range cert.CertificatesDER {
-		switch c, d := x509.ParseCertificate(b); {
-		case d != nil:
-			return fail(d)
+	for _, b := range outbound.CertificatesDER {
+		switch interimCert, err = x509.ParseCertificate(b); {
+		case err != nil:
+			return nil, err
 		default:
-			cert.Certificates = append(cert.Certificates, c)
+			outbound.Certificates = append(outbound.Certificates, interimCert)
 		}
 	}
 
-	switch cert.PrivateKey, err = parsePrivateKey(cert.PrivateKeyDER); {
+	switch outbound.PrivateKey, err = parsePrivateKey(outbound.PrivateKeyDER); {
 	case err != nil:
-		return fail(err)
+		return nil, err
 	}
 
 	// TODO complete local chain verification
 	// We don't need to parse the public key for TLS, but we so do anyway
 	// to check that it looks sane and matches the private key.
 
-	switch pub := cert.Certificates[0].PublicKey.(type) {
+	switch pub := outbound.Certificates[0].PublicKey.(type) {
 	case *rsa.PublicKey:
-		switch priv, ok := cert.PrivateKey.(*rsa.PrivateKey); {
+		switch priv, ok := outbound.PrivateKey.(*rsa.PrivateKey); {
 		case !ok:
-			return fail(errors.New("tls: private key type does not match public key type"))
+			return nil, errors.New("tls: private key type does not match public key type")
 		case pub.N.Cmp(priv.N) != 0:
-			return fail(errors.New("tls: private key does not match public key"))
+			return nil, errors.New("tls: private key does not match public key")
 		}
 	case *ecdsa.PublicKey:
-		switch priv, ok := cert.PrivateKey.(*ecdsa.PrivateKey); {
+		switch priv, ok := outbound.PrivateKey.(*ecdsa.PrivateKey); {
 		case !ok:
-			return fail(errors.New("tls: private key type does not match public key type"))
+			return nil, errors.New("tls: private key type does not match public key type")
 		case pub.X.Cmp(priv.X) != 0 || pub.Y.Cmp(priv.Y) != 0:
-			return fail(errors.New("tls: private key does not match public key"))
+			return nil, errors.New("tls: private key does not match public key")
 		}
 	case ed25519.PublicKey:
-		switch priv, ok := cert.PrivateKey.(ed25519.PrivateKey); {
+		switch priv, ok := outbound.PrivateKey.(ed25519.PrivateKey); {
 		case !ok:
-			return fail(errors.New("tls: private key type does not match public key type"))
+			return nil, errors.New("tls: private key type does not match public key type")
 		case !bytes.Equal(priv.Public().(ed25519.PublicKey), pub):
-			return fail(errors.New("tls: private key does not match public key"))
+			return nil, errors.New("tls: private key does not match public key")
 		}
 	default:
-		return fail(errors.New("tls: unknown public key algorithm"))
+		return nil, errors.New("tls: unknown public key algorithm")
 	}
 
-	return cert, nil
+	return
 }
 func parsePrivateKey(der []byte) (key crypto.PrivateKey, err error) {
 	switch key, err = x509.ParsePKCS1PrivateKey(der); {

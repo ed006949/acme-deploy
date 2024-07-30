@@ -33,13 +33,6 @@ func main() {
 
 	// parse CLI
 	flag.Parse()
-	//
-	//
-	// testing
-	//
-	// _ = flag.Set("config", "./etc/acme-deploy.xml")
-	// _ = flag.Set("dry-run", "true")
-	//
 	switch {
 	case !l.IsFlagExist("config"):
 		flag.Usage()

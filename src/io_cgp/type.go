@@ -20,9 +20,6 @@ type Command struct {
 	Domain_Administration     *Domain_Administration     `structs:",omitempty"`
 }
 
-type OutputArray []string
-type OutputString string
-
 type Domain_Set_Administration struct {
 	MAINDOMAINNAME *MAINDOMAINNAME `structs:",omitempty"`
 	LISTDOMAINS    *LISTDOMAINS    `structs:",omitempty"`
