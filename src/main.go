@@ -94,20 +94,20 @@ func main() {
 	}
 
 	vfsDB.MustReadVFS()
-	// defer vfsDB.MustWriteVFS()
+	// defer vfsDB.MustWriteVFS() // we don't change anything locally, yet
 
-	for c := range vfsDB.List {
-		for _, b := range vfsDB.MustLGlob(c, "cert-home/*/*/*.conf") {
+	for a := range vfsDB.List {
+		for _, d := range vfsDB.MustLGlob(a, "cert-home/*/*/*.conf") {
 			var (
 				interimLEConf *leConf
 			)
 
-			switch interimLEConf, err = load(vfsDB, b); {
+			switch interimLEConf, err = load(vfsDB, d); {
 			case err != nil && err.Error() == "config data is not enough":
-				l.Debug.E(err, l.F{"file": b})
+				l.Debug.E(err, l.F{"file": d})
 				continue
 			case err != nil:
-				l.Warning.E(err, l.F{"file": b})
+				l.Warning.E(err, l.F{"file": d})
 				continue
 			}
 

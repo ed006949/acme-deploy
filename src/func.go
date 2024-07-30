@@ -23,24 +23,6 @@ func load(vfsDB *io_vfs.VFSDB, iniFile string) (outbound *leConf, err error) {
 		return nil, errors.New("config data is not enough")
 	}
 
-	switch cert, err = io_crypto.X509KeyPair(
-		// 	vfsDB.MustReadFile(interimIniConf.Le_RealFullChainPath),
-		// 	vfsDB.MustReadFile(interimIniConf.Le_RealKeyPath),
-		vfsDB.MustReadFile(strings.ReplaceAll(
-			interimIniConf.Le_RealFullChainPath,
-			"/var/etc/acme-client/",
-			vfsDB.List["acme-client"]+"/",
-		)),
-		vfsDB.MustReadFile(strings.ReplaceAll(
-			interimIniConf.Le_RealKeyPath,
-			"/var/etc/acme-client/",
-			vfsDB.List["acme-client"]+"/",
-		)),
-	); {
-	case err != nil:
-		return nil, err
-	}
-
 	outbound = &leConf{
 		leDomain: interimIniConf.Le_Domain,
 		leAlt: func() (outbound []string) {
@@ -53,37 +35,37 @@ func load(vfsDB *io_vfs.VFSDB, iniFile string) (outbound *leConf, err error) {
 			}
 			return
 		}(),
-
-		//
-		// production:
-		//
-		// leRealCertPath:      interimIniConf.Le_RealCertPath,
-		// leRealCACertPath:    interimIniConf.Le_RealCACertPath,
-		// leRealKeyPath:       interimIniConf.Le_RealKeyPath,
-		// leRealFullChainPath: interimIniConf.Le_RealFullChainPath,
-		cert: cert,
-
-		//
-		// MX
-		//
-		// mxList: io_net.LookupMX(
-		// 	func() (outbound []string) {
-		// 		switch {
-		// 		case leconf[interimIniConf.Le_Domain].leAlt != nil:
-		// 			outbound = leconf[interimIniConf.Le_Domain].leAlt
-		// 		}
-		// 		outbound = append(outbound, interimIniConf.Le_Domain)
-		// 		return
-		// 	}()),
-
-		//
-		// development:
-		//
-		leRealCertPath:      strings.ReplaceAll(interimIniConf.Le_RealCertPath, "/var/etc/acme-client/", vfsDB.List["acme-client"]+"/"),
-		leRealCACertPath:    strings.ReplaceAll(interimIniConf.Le_RealCACertPath, "/var/etc/acme-client/", vfsDB.List["acme-client"]+"/"),
-		leRealKeyPath:       strings.ReplaceAll(interimIniConf.Le_RealKeyPath, "/var/etc/acme-client/", vfsDB.List["acme-client"]+"/"),
-		leRealFullChainPath: strings.ReplaceAll(interimIniConf.Le_RealFullChainPath, "/var/etc/acme-client/", vfsDB.List["acme-client"]+"/"),
+		leRealCertPath:      interimIniConf.Le_RealCertPath,
+		leRealCACertPath:    interimIniConf.Le_RealCACertPath,
+		leRealKeyPath:       interimIniConf.Le_RealKeyPath,
+		leRealFullChainPath: interimIniConf.Le_RealFullChainPath,
+		cert:                cert,
 	}
+	// outbound.mxList = io_net.LookupMX(append(outbound.leAlt, interimIniConf.Le_Domain))
+
+	// switch cert, err = io_crypto.X509KeyPair(
+	// 	vfsDB.MustReadFile(outbound.leRealFullChainPath),
+	// 	vfsDB.MustReadFile(outbound.leRealKeyPath),
+	// ); {
+	// case err != nil:
+	// 	return nil, err
+	// }
+
+	//
+	switch cert, err = io_crypto.X509KeyPair(
+		vfsDB.MustReadFile(strings.ReplaceAll(outbound.leRealFullChainPath, "/var/etc/acme-client/", vfsDB.List["acme-client"]+"/")),
+		vfsDB.MustReadFile(strings.ReplaceAll(outbound.leRealKeyPath, "/var/etc/acme-client/", vfsDB.List["acme-client"]+"/")),
+	); {
+	case err != nil:
+		return nil, err
+	}
+	outbound.leRealCertPath = strings.ReplaceAll(outbound.leRealCertPath, "/var/etc/acme-client/", vfsDB.List["acme-client"]+"/")
+	outbound.leRealCACertPath = strings.ReplaceAll(outbound.leRealCACertPath, "/var/etc/acme-client/", vfsDB.List["acme-client"]+"/")
+	outbound.leRealKeyPath = strings.ReplaceAll(outbound.leRealKeyPath, "/var/etc/acme-client/", vfsDB.List["acme-client"]+"/")
+	outbound.leRealFullChainPath = strings.ReplaceAll(outbound.leRealFullChainPath, "/var/etc/acme-client/", vfsDB.List["acme-client"]+"/")
+	//
+
+	outbound.cert = cert
 
 	return
 }
