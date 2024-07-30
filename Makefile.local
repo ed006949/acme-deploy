@@ -1,0 +1,18 @@
+ORIGIN		:=	github.com/ed006949
+NAME		:=	acme-deploy
+VERSION		:=	0.0.1
+
+PACKAGE		:=	${ORIGIN}/${NAME}
+
+TARGET		:=	${NAME}
+
+GITIGNORE_URL	:=	https://www.toptal.com/developers/gitignore/api/go,linux,macos,windows,jetbrains,jetbrains+all,jetbrains+iml,visualstudiocode,xcode,xcodeinjection
+
+#GPG_KEY		:=	A2FC1F3EF2AC4B53
+
+#
+#
+#
+#
+execute:
+	./bin/${NAME}
