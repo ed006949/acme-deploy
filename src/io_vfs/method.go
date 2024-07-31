@@ -134,7 +134,7 @@ func (receiver *VFSDB) MustWriteVFS() {
 
 			case dirEntry.Type() == fs.ModeSymlink &&
 				dirEntry.Type() == orphanFileInfo.Mode().Type() &&
-				io_fs.MustReadLink(name) != receiver.MustReadlink(name): // check symlink match
+				io_fs.MustReadLink(name) != receiver.MustReadlink(name): //         check symlink match
 				orphanList[name] = struct{}{}
 			}
 

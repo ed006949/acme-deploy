@@ -104,7 +104,7 @@ func (receiver *AuthDB) WriteSSH(name string, user string, pemBytes []byte, pass
 }
 func (receiver *AuthDB) MustWriteSSH(name string, user string, pemBytes []byte, password string) {
 	switch err := receiver.WriteSSH(name, user, pemBytes, password); {
-	case err != nil && errors.Is(err, l.EDUPDATA):
+	case errors.Is(err, l.EDUPDATA):
 		l.Warning.E(err, l.F{"ssh key": name})
 	case err != nil:
 		l.Critical.E(err, l.F{"ssh key": name})
@@ -125,7 +125,7 @@ func (receiver *AuthDB) WriteToken(name string, user string, tokenBytes []byte) 
 }
 func (receiver *AuthDB) MustWriteToken(name string, user string, tokenBytes []byte) {
 	switch err := receiver.WriteToken(name, user, tokenBytes); {
-	case err != nil && errors.Is(err, l.EDUPDATA):
+	case errors.Is(err, l.EDUPDATA):
 		l.Warning.E(err, l.F{"token": name})
 	case err != nil:
 		l.Critical.E(err, l.F{"token": name})

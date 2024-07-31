@@ -118,7 +118,7 @@ func main() {
 						)
 
 						switch interimLEConf, err = load(vfsDB, name); {
-						case err != nil && err.Error() == "config data is not enough":
+						case errors.Is(err, l.ENEDATA):
 							l.Debug.E(err, l.F{"file": name})
 						case err != nil:
 							l.Warning.E(err, l.F{"file": name})

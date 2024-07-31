@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"errors"
 
 	"github.com/go-ini/ini"
 
@@ -23,7 +22,7 @@ func load(vfsDB *io_vfs.VFSDB, iniFile string) (outbound *leConf, err error) {
 	case err != nil:
 		return nil, err
 	case len(outbound.LEDomain) == 0 || len(outbound.LERealCertPath) == 0 || len(outbound.LERealCACertPath) == 0 || len(outbound.LERealKeyPath) == 0 || len(outbound.LERealFullChainPath) == 0:
-		return nil, errors.New("config data is not enough")
+		return nil, l.ENEDATA
 	}
 
 	outbound.LEAlt = l.FilterSlice(outbound.LEAlt, "no") // OPNSense and acme.sh, alt domain name = "no" ????

@@ -1,11 +1,12 @@
 package l
 
 const (
-	EORPHANED Errno = iota
+	EORPHANED errorNumber = iota
 	EDUPDATA
 	EEXIST
 	ENOTFOUND
 	EINVAL
+	ENEDATA
 )
 
 var errorDescription = [...]string{
@@ -14,14 +15,21 @@ var errorDescription = [...]string{
 	EEXIST:    "already exists",
 	ENOTFOUND: "not found",
 	EINVAL:    "invalid argument",
+	ENEDATA:   "not enough data",
 }
 
-type Errno uint
+type errorNumber uint
 
-func (e Errno) Is(target error) bool { return e == target }
-func (e Errno) Timeout() bool        { return false }
-func (e Errno) Temporary() bool      { return e.Timeout() }
-func (e Errno) Error() string        { return errorDescription[e] }
+func (e errorNumber) Error() string        { return errorDescription[e] }
+func (e errorNumber) Is(target error) bool { return e == target }
+
+// func (e errorNumber) Timeout() bool        { return false }
+// func (e errorNumber) Temporary() bool      { return e.Timeout() }
+
+// func (e errorNumber) Wrap() error          { return fmt.Errorf("%w", errors.New(e.Error())) }
+// func (e errorNumber) Unwrap() error        { return e }
+
+// fmt.Errorf("%w %w", errors.New("foo"), errors.New("bar"))
 
 //
 //

@@ -1,7 +1,7 @@
 package io_cgp
 
 const (
-	ECom Errno = iota
+	ECom errorNumber = iota
 	EComSet
 	EComSetDomAdm
 	EComSetDomSetAdm
@@ -14,9 +14,7 @@ var errorDescription = [...]string{
 	EComSetDomSetAdm: "unknown Domain Set Administration command",
 }
 
-type Errno uint
+type errorNumber uint
 
-func (e Errno) Is(target error) bool { return e == target }
-func (e Errno) Timeout() bool        { return false }
-func (e Errno) Temporary() bool      { return e.Timeout() }
-func (e Errno) Error() string        { return errorDescription[e] }
+func (e errorNumber) Error() string        { return errorDescription[e] }
+func (e errorNumber) Is(target error) bool { return e == target }
