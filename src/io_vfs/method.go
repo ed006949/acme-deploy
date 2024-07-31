@@ -116,7 +116,7 @@ func (receiver *VFSDB) MustReadVFS() {
 func (receiver *VFSDB) MustWriteVFS() {
 	// remove described-only orphaned entries from FS
 	var (
-		orphanList = make(map[string]bool)
+		orphanList = make(map[string]struct{})
 		orphanFn   = func(name string, dirEntry fs.DirEntry, err error) error {
 			switch {
 			case err != nil:
@@ -125,16 +125,16 @@ func (receiver *VFSDB) MustWriteVFS() {
 
 			switch orphanFileInfo, orphanErr := receiver.VFS.Lstat(name); {
 			case errors.Is(orphanErr, fs.ErrNotExist): //							not exist
-				orphanList[name] = true
+				orphanList[name] = struct{}{}
 			case orphanErr != nil: //												error
 				l.Critical.E(err, nil /* l.F{"name": name} */)
 			case dirEntry.Type() != orphanFileInfo.Mode().Type(): //				exist but different type
-				orphanList[name] = true
+				orphanList[name] = struct{}{}
 
 			case dirEntry.Type() == fs.ModeSymlink &&
 				dirEntry.Type() == orphanFileInfo.Mode().Type() &&
 				io_fs.MustReadLink(name) != receiver.MustReadlink(name): // check symlink match
-				orphanList[name] = true
+				orphanList[name] = struct{}{}
 			}
 
 			return nil
@@ -145,12 +145,8 @@ func (receiver *VFSDB) MustWriteVFS() {
 		receiver.MustWalkDir(b, orphanFn)
 	}
 
-	for a, b := range orphanList {
-		switch b {
-		case true:
-			l.Notice.E(ErrOrphanedEntry, l.F{"name": a})
-			// io_fs.MustRemove(a)
-		}
+	for a := range orphanList {
+		l.Notice.E(ErrOrphanedEntry, l.F{"name": a})
 	}
 
 	// compare and sync VFS to FS

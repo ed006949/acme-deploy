@@ -88,7 +88,7 @@ func main() {
 
 		leConfig    = make(map[string]*leConf)
 		leConfigMap = make(map[string]*leConf)
-		// MXList = make(map[string]bool)
+		// MXList = make(map[string]struct{})
 	)
 
 	for _, b := range xmlConfig.ACMEClients {
