@@ -1,6 +1,6 @@
 ORIGIN		:=	github.com/ed006949
 NAME		:=	acme-deploy
-VERSION		:=	0.0.1
+VERSION		:=	0.0.2
 
 PACKAGE		:=	${ORIGIN}/${NAME}
 
@@ -15,4 +15,4 @@ GITIGNORE_URL	:=	https://www.toptal.com/developers/gitignore/api/go,linux,macos,
 #
 #
 execute:
-	./bin/${NAME}
+	./bin/${NAME} --config="./etc/${NAME}.xml"
