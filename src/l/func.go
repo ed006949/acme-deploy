@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -18,7 +17,7 @@ func SetPackageVerbosity(inbound string) error {
 	case err != nil:
 		return err
 	case len(inbound) == 0 || value == zerolog.NoLevel:
-		return syscall.EINVAL
+		return EINVAL
 	default:
 		zerolog.SetGlobalLevel(value) // how it works ....
 		log.Logger = log.Level(value).With().Timestamp().Caller().Logger().Output(zerolog.ConsoleWriter{

@@ -2,7 +2,6 @@ package io_cgp
 
 import (
 	"bytes"
-	"errors"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -86,7 +85,7 @@ func (receiver *Token) Command(inbound *Command) (outbound []string, err error) 
 				}
 
 			default:
-				return nil, errors.New("unknown Domain_Administration command")
+				return nil, EComSetDomAdm
 			}
 
 		case inbound.Domain_Set_Administration != nil:
@@ -99,18 +98,18 @@ func (receiver *Token) Command(inbound *Command) (outbound []string, err error) 
 				payload += inbound.Domain_Set_Administration.LISTDOMAINS.compile()
 
 			default:
-				return nil, errors.New("unknown Domain_Set_Administration command")
+				return nil, EComSetDomSetAdm
 			}
 
 		default:
-			return nil, errors.New("unknown command set")
+			return nil, EComSet
 		}
 
 		l.Debug.L(l.F{"CGP": receiver.Name, "payload": payload})
 		return receiver.command(payload)
 
 	default:
-		return nil, errors.New("unknown type")
+		return nil, ECom
 	}
 
 }

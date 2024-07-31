@@ -88,36 +88,62 @@ func (receiver *GitDB) MustCommit(msg string) {
 	l.Informational.L(l.F{"repo": receiver.Path, "status": mustStatus(receiver.Worktree).String()})
 }
 
-func (receiver *AuthDB) MustWriteSSH(name string, user string, pemBytes []byte, password string) {
+func (receiver *AuthDB) WriteSSH(name string, user string, pemBytes []byte, password string) error {
 	switch _, ok := (*receiver)[name]; {
 	case ok:
-		l.Warning.E(errors.New("duplicate data"), l.F{"ssh key": name})
-		return
+		return l.EDUPDATA
 	}
 
 	switch outbound, err := ssh.NewPublicKeys(user, pemBytes, password); {
 	case err != nil:
-		l.Critical.E(err, l.F{"ssh key": name})
+		return err
 	default:
 		(*receiver)[name] = outbound
+		return nil
 	}
 }
-func (receiver *AuthDB) MustWriteToken(name string, user string, tokenBytes []byte) {
+func (receiver *AuthDB) MustWriteSSH(name string, user string, pemBytes []byte, password string) {
+	switch err := receiver.WriteSSH(name, user, pemBytes, password); {
+	case err != nil && errors.Is(err, l.EDUPDATA):
+		l.Warning.E(err, l.F{"ssh key": name})
+	case err != nil:
+		l.Critical.E(err, l.F{"ssh key": name})
+	}
+}
+
+func (receiver *AuthDB) WriteToken(name string, user string, tokenBytes []byte) error {
 	switch _, ok := (*receiver)[name]; {
 	case ok:
-		l.Warning.E(errors.New("duplicate data"), l.F{"token": name})
-		return
+		return l.EDUPDATA
 	}
 
 	(*receiver)[name] = &http.BasicAuth{
 		Username: user,
 		Password: string(tokenBytes),
 	}
+	return nil
 }
-func (receiver *AuthDB) MustReadAuth(name string) transport.AuthMethod {
+func (receiver *AuthDB) MustWriteToken(name string, user string, tokenBytes []byte) {
+	switch err := receiver.WriteToken(name, user, tokenBytes); {
+	case err != nil && errors.Is(err, l.EDUPDATA):
+		l.Warning.E(err, l.F{"token": name})
+	case err != nil:
+		l.Critical.E(err, l.F{"token": name})
+	}
+}
+
+func (receiver *AuthDB) ReadAuth(name string) (transport.AuthMethod, error) {
 	switch value, ok := (*receiver)[name]; {
 	case !ok:
-		l.Critical.E(errors.New("not found"), l.F{"auth": name})
+		return nil, l.ENOTFOUND
+	default:
+		return value, nil
+	}
+}
+func (receiver *AuthDB) MustReadAuth(name string) transport.AuthMethod {
+	switch value, err := receiver.ReadAuth(name); {
+	case err != nil:
+		l.Critical.E(err, l.F{"auth": name})
 		return nil
 	default:
 		return value

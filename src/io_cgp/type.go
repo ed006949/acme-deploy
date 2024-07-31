@@ -16,35 +16,35 @@ type Token struct {
 }
 
 type Command struct {
-	*Domain_Set_Administration `structs:",omitempty"`
-	*Domain_Administration     `structs:",omitempty"`
+	*Domain_Set_Administration
+	*Domain_Administration
 }
 
 type Domain_Set_Administration struct {
-	*MAINDOMAINNAME `structs:",omitempty"`
-	*LISTDOMAINS    `structs:",omitempty"`
+	*MAINDOMAINNAME
+	*LISTDOMAINS
 }
 
 type Domain_Administration struct {
-	*GETDOMAINALIASES     `structs:",omitempty"`
-	*UPDATEDOMAINSETTINGS `structs:",omitempty"`
+	*GETDOMAINALIASES
+	*UPDATEDOMAINSETTINGS
 }
 
 type MAINDOMAINNAME struct{}
 type LISTDOMAINS struct{}
 
 type GETDOMAINALIASES struct {
-	DomainName string `structs:",omitempty"`
+	DomainName string
 }
 
 type Command_Dictionary struct {
-	CAChain           string `structs:",omitempty"`
-	CertificateType   string `structs:",omitempty"`
-	PrivateSecureKey  string `structs:",omitempty"`
-	SecureCertificate string `structs:",omitempty"`
+	CAChain           string
+	CertificateType   string
+	PrivateSecureKey  string
+	SecureCertificate string
 }
 
 type UPDATEDOMAINSETTINGS struct {
-	DomainName  string             `structs:",omitempty"`
-	NewSettings Command_Dictionary `structs:",omitempty"`
+	DomainName  string
+	NewSettings Command_Dictionary
 }

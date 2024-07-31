@@ -1,8 +1,6 @@
 package l
 
 import (
-	"syscall"
-
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -41,7 +39,7 @@ func (receiver severity) lAction(err error, inbound map[string]interface{}) {
 	case Trace:
 		event = log.Trace()
 	default:
-		log.Error().Caller().Any("dry-run", PackageDryRun).Any("Severity", receiver).Err(syscall.EINVAL).Send()
+		log.Error().Caller().Any("dry-run", PackageDryRun).Any("Severity", receiver).Err(EINVAL).Send()
 		event = log.Error()
 	}
 

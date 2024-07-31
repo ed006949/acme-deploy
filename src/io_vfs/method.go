@@ -49,7 +49,7 @@ func (receiver *VFSDB) MustGetFullAbs(listID string, name string) string {
 	case ok:
 		return receiver.MustAbs(filepath.Join(value, name))
 	default:
-		l.Critical.E(ErrListIDNotFound, l.F{"list ID": listID})
+		l.Critical.E(l.ENOTFOUND, l.F{"list ID": listID})
 		return ""
 	}
 }
@@ -147,7 +147,7 @@ func (receiver *VFSDB) MustWriteVFS() {
 	}
 
 	for a := range orphanList {
-		l.Notice.E(ErrOrphanedEntry, l.F{"name": a})
+		l.Notice.E(l.EORPHANED, l.F{"name": a})
 	}
 
 	// compare and sync VFS to FS
