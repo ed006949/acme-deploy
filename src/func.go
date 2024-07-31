@@ -1,8 +1,8 @@
 package main
 
 import (
+	"bytes"
 	"errors"
-	"strings"
 
 	"github.com/go-ini/ini"
 
@@ -16,7 +16,12 @@ func load(vfsDB *io_vfs.VFSDB, iniFile string) (outbound *leConf, err error) {
 		cert           *io_crypto.Certificate
 	)
 
-	switch err = ini.MapTo(&interimIniConf, vfsDB.MustReadFile(iniFile)); {
+	// switch err = ini.MapTo(&interimIniConf, vfsDB.MustReadFile(iniFile)); {
+	switch err = ini.MapTo(&interimIniConf, bytes.ReplaceAll(
+		vfsDB.MustReadFile(iniFile),
+		[]byte("/var/etc/acme-client/"),
+		[]byte(vfsDB.List["acme-client"]+"/"),
+	)); {
 	case err != nil:
 		return nil, err
 	case len(interimIniConf.Le_Domain) == 0 || len(interimIniConf.Le_RealCertPath) == 0 || len(interimIniConf.Le_RealCACertPath) == 0 || len(interimIniConf.Le_RealKeyPath) == 0 || len(interimIniConf.Le_RealFullChainPath) == 0:
@@ -39,33 +44,20 @@ func load(vfsDB *io_vfs.VFSDB, iniFile string) (outbound *leConf, err error) {
 		leRealCACertPath:    interimIniConf.Le_RealCACertPath,
 		leRealKeyPath:       interimIniConf.Le_RealKeyPath,
 		leRealFullChainPath: interimIniConf.Le_RealFullChainPath,
-		cert:                cert,
+		cert:                nil,
+		mxList:              nil,
 	}
-	// outbound.mxList = io_net.LookupMX(append(outbound.leAlt, interimIniConf.Le_Domain))
 
-	// switch cert, err = io_crypto.X509KeyPair(
-	// 	vfsDB.MustReadFile(outbound.leRealFullChainPath),
-	// 	vfsDB.MustReadFile(outbound.leRealKeyPath),
-	// ); {
-	// case err != nil:
-	// 	return nil, err
-	// }
-
-	//
 	switch cert, err = io_crypto.X509KeyPair(
-		vfsDB.MustReadFile(strings.ReplaceAll(outbound.leRealFullChainPath, "/var/etc/acme-client/", vfsDB.List["acme-client"]+"/")),
-		vfsDB.MustReadFile(strings.ReplaceAll(outbound.leRealKeyPath, "/var/etc/acme-client/", vfsDB.List["acme-client"]+"/")),
+		vfsDB.MustReadFile(outbound.leRealFullChainPath),
+		vfsDB.MustReadFile(outbound.leRealKeyPath),
 	); {
 	case err != nil:
 		return nil, err
 	}
-	outbound.leRealCertPath = strings.ReplaceAll(outbound.leRealCertPath, "/var/etc/acme-client/", vfsDB.List["acme-client"]+"/")
-	outbound.leRealCACertPath = strings.ReplaceAll(outbound.leRealCACertPath, "/var/etc/acme-client/", vfsDB.List["acme-client"]+"/")
-	outbound.leRealKeyPath = strings.ReplaceAll(outbound.leRealKeyPath, "/var/etc/acme-client/", vfsDB.List["acme-client"]+"/")
-	outbound.leRealFullChainPath = strings.ReplaceAll(outbound.leRealFullChainPath, "/var/etc/acme-client/", vfsDB.List["acme-client"]+"/")
-	//
 
 	outbound.cert = cert
+	// outbound.mxList = io_net.LookupMX(append(outbound.leAlt, interimIniConf.Le_Domain))
 
 	return
 }

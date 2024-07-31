@@ -3,10 +3,12 @@ package main
 import (
 	"errors"
 	"flag"
+	"io/fs"
 	"net"
 	"net/url"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/avfs/avfs"
 	"github.com/avfs/avfs/idm/dummyidm"
@@ -96,23 +98,42 @@ func main() {
 	vfsDB.MustReadVFS()
 	// defer vfsDB.MustWriteVFS() // we don't change anything locally, yet
 
-	for a := range vfsDB.List {
-		for _, d := range vfsDB.MustLGlob(a, "cert-home/*/*/*.conf") {
-			var (
-				interimLEConf *leConf
-			)
+	// find acme.sh LE config files
+	for _, b := range vfsDB.List {
+		var (
+			syncFn = func(name string, dirEntry fs.DirEntry, err error) error {
+				switch {
+				case err != nil:
+					l.Critical.E(err, l.F{"name": name})
+				}
 
-			switch interimLEConf, err = load(vfsDB, d); {
-			case err != nil && err.Error() == "config data is not enough":
-				l.Debug.E(err, l.F{"file": d})
-				continue
-			case err != nil:
-				l.Warning.E(err, l.F{"file": d})
-				continue
+				switch dirEntry.Type() {
+				case fs.ModeDir:
+				case fs.ModeSymlink:
+				case 0:
+					switch {
+					case strings.HasSuffix(name, ".conf"):
+						var (
+							interimLEConf *leConf
+						)
+
+						switch interimLEConf, err = load(vfsDB, name); {
+						case err != nil && err.Error() == "config data is not enough":
+							l.Debug.E(err, l.F{"file": name})
+						case err != nil:
+							l.Warning.E(err, l.F{"file": name})
+						default:
+							leConfig[interimLEConf.leDomain] = interimLEConf
+						}
+					}
+				default:
+				}
+
+				return nil
 			}
+		)
 
-			leConfig[interimLEConf.leDomain] = interimLEConf
-		}
+		vfsDB.MustWalkDir(b, syncFn)
 	}
 
 	for _, b := range leConfig {
