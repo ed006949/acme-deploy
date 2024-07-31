@@ -10,6 +10,7 @@ require (
 	github.com/go-ini/ini v1.67.0
 	github.com/rs/zerolog v1.33.0
 	golang.org/x/crypto v0.25.0
+	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 )
 
 require (

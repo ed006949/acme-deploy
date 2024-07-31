@@ -25,7 +25,7 @@ func (receiver *VFSDB) MustReadlink(name string) string {
 func (receiver *VFSDB) MustReadFile(name string) []byte {
 	switch outbound, err := receiver.VFS.ReadFile(name); {
 	case err != nil:
-		l.Critical.E(err, nil /* l.F{"name": name} */)
+		l.Critical.E(err, l.F{"name": name})
 		return nil
 	default:
 		return outbound

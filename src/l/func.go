@@ -11,6 +11,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/exp/constraints"
 )
 
 func SetPackageVerbosity(inbound string) error {
@@ -72,5 +73,24 @@ func IsFlagExist(name string) (outbound bool) {
 			outbound = true
 		}
 	})
+	return
+}
+
+func FilterSlice[Slice ~[]Element, Element interface{ constraints.Ordered }](inbound Slice, filter ...Element) (outbound Slice) {
+	var (
+		interim = func() (outbound map[Element]struct{}) {
+			outbound = make(map[Element]struct{})
+			for _, b := range filter {
+				outbound[b] = struct{}{}
+			}
+			return
+		}()
+	)
+	for _, b := range inbound {
+		switch _, ok := interim[b]; {
+		case !ok:
+			outbound = append(outbound, b)
+		}
+	}
 	return
 }

@@ -88,7 +88,7 @@ func main() {
 
 		leConfig    = make(map[string]*leConf)
 		leConfigMap = make(map[string]*leConf)
-		// mxList = make(map[string]bool)
+		// MXList = make(map[string]bool)
 	)
 
 	for _, b := range xmlConfig.ACMEClients {
@@ -123,7 +123,7 @@ func main() {
 						case err != nil:
 							l.Warning.E(err, l.F{"file": name})
 						default:
-							leConfig[interimLEConf.leDomain] = interimLEConf
+							leConfig[interimLEConf.LEDomain] = interimLEConf
 						}
 					}
 				default:
@@ -137,10 +137,10 @@ func main() {
 	}
 
 	for _, b := range leConfig {
-		for _, d := range append(b.leAlt, b.leDomain) {
+		for _, d := range append(b.LEAlt, b.LEDomain) {
 			switch value, ok := leConfigMap[d]; {
 			case ok:
-				l.Warning.E(errors.New("duplicate data"), l.F{"LE certificate": value.leDomain})
+				l.Warning.E(errors.New("duplicate data"), l.F{"LE certificate": value.LEDomain})
 				continue
 			}
 			leConfigMap[d] = b
@@ -219,7 +219,7 @@ func main() {
 				for _, h := range append(d, c) {
 					switch value, ok := leConfigMap[h]; {
 					case ok:
-						l.Informational.L(l.F{"LE certificate": value.leDomain, "CGP domain": c})
+						l.Informational.L(l.F{"LE certificate": value.LEDomain, "CGP domain": c})
 						switch updateDomainSettings, err = b.Command(
 							&io_cgp.Command{
 								Domain_Administration: &io_cgp.Domain_Administration{
@@ -227,9 +227,9 @@ func main() {
 										DomainName: c,
 										NewSettings: io_cgp.Command_Dictionary{
 											CertificateType:   "YES",
-											PrivateSecureKey:  string(value.cert.PrivateKeyRawPEM),
-											SecureCertificate: string(value.cert.CertificatesRawPEM[0]),
-											CAChain:           string(value.cert.CertificateCAChainRawPEM),
+											PrivateSecureKey:  string(value.Certificate.PrivateKeyRawPEM),
+											SecureCertificate: string(value.Certificate.CertificatesRawPEM[0]),
+											CAChain:           string(value.Certificate.CertificateCAChainRawPEM),
 										},
 									},
 								},
@@ -237,14 +237,14 @@ func main() {
 						); {
 						case err != nil:
 							l.Error.E(err, l.F{
-								"LE certificate": value.leDomain,
+								"LE certificate": value.LEDomain,
 								"CGP domain":     c,
 								"result":         updateDomainSettings,
 							})
 							continue
 						case updateDomainSettings != nil:
 							l.Warning.E(errors.New("unexpected data"), l.F{
-								"LE certificate": value.leDomain,
+								"LE certificate": value.LEDomain,
 								"CGP domain":     c,
 								"result":         updateDomainSettings,
 							})

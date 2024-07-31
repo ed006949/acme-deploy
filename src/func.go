@@ -8,56 +8,48 @@ import (
 
 	"acme-deploy/src/io_crypto"
 	"acme-deploy/src/io_vfs"
+	"acme-deploy/src/l"
 )
 
 func load(vfsDB *io_vfs.VFSDB, iniFile string) (outbound *leConf, err error) {
-	var (
-		interimIniConf iniLEConf
-		cert           *io_crypto.Certificate
-	)
+	outbound = new(leConf)
 
 	// switch err = ini.MapTo(&interimIniConf, vfsDB.MustReadFile(iniFile)); {
-	switch err = ini.MapTo(&interimIniConf, bytes.ReplaceAll(
+	switch err = ini.MapTo(outbound, bytes.ReplaceAll(
 		vfsDB.MustReadFile(iniFile),
 		[]byte("/var/etc/acme-client/"),
 		[]byte(vfsDB.List["acme-client"]+"/"),
 	)); {
 	case err != nil:
 		return nil, err
-	case len(interimIniConf.Le_Domain) == 0 || len(interimIniConf.Le_RealCertPath) == 0 || len(interimIniConf.Le_RealCACertPath) == 0 || len(interimIniConf.Le_RealKeyPath) == 0 || len(interimIniConf.Le_RealFullChainPath) == 0:
+	case len(outbound.LEDomain) == 0 || len(outbound.LERealCertPath) == 0 || len(outbound.LERealCACertPath) == 0 || len(outbound.LERealKeyPath) == 0 || len(outbound.LERealFullChainPath) == 0:
 		return nil, errors.New("config data is not enough")
 	}
 
-	outbound = &leConf{
-		leDomain: interimIniConf.Le_Domain,
-		leAlt: func() (outbound []string) {
-			for _, f := range interimIniConf.Le_Alt {
-				switch {
-				case f == "no": // OPNSense and acme.sh, alt domain name = "no" ????
-					continue
-				}
-				outbound = append(outbound, f)
+	outbound.LEAlt = func() (interim []string) {
+		for _, b := range outbound.LEAlt {
+			switch {
+			case b == "no": // OPNSense and acme.sh, alt domain name = "no" ????
+				continue
 			}
-			return
-		}(),
-		leRealCertPath:      interimIniConf.Le_RealCertPath,
-		leRealCACertPath:    interimIniConf.Le_RealCACertPath,
-		leRealKeyPath:       interimIniConf.Le_RealKeyPath,
-		leRealFullChainPath: interimIniConf.Le_RealFullChainPath,
-		cert:                nil,
-		mxList:              nil,
-	}
+			interim = append(interim, b)
+		}
+		return
+	}()
 
-	switch cert, err = io_crypto.X509KeyPair(
-		vfsDB.MustReadFile(outbound.leRealFullChainPath),
-		vfsDB.MustReadFile(outbound.leRealKeyPath),
+	// outbound.LEAlt = l.FilterSliceString(outbound.LEAlt, "no") // OPNSense and acme.sh, alt domain name = "no" ????
+	outbound.LEAlt = l.FilterSlice(outbound.LEAlt, "no") // OPNSense and acme.sh, alt domain name = "no" ????
+	// outbound.LEAlt = slices.Delete(outbound.LEAlt, 0, 0)
+
+	switch outbound.Certificate, err = io_crypto.X509KeyPair(
+		vfsDB.MustReadFile(outbound.LERealFullChainPath),
+		vfsDB.MustReadFile(outbound.LERealKeyPath),
 	); {
 	case err != nil:
 		return nil, err
 	}
 
-	outbound.cert = cert
-	// outbound.mxList = io_net.LookupMX(append(outbound.leAlt, interimIniConf.Le_Domain))
+	// outbound.MXList = io_net.LookupMX(append(outbound.LEAlt, interimIniConf.LEDomain))
 
 	return
 }

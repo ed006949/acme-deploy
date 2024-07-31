@@ -16,18 +16,18 @@ type Token struct {
 }
 
 type Command struct {
-	Domain_Set_Administration *Domain_Set_Administration `structs:",omitempty"`
-	Domain_Administration     *Domain_Administration     `structs:",omitempty"`
+	*Domain_Set_Administration `structs:",omitempty"`
+	*Domain_Administration     `structs:",omitempty"`
 }
 
 type Domain_Set_Administration struct {
-	MAINDOMAINNAME *MAINDOMAINNAME `structs:",omitempty"`
-	LISTDOMAINS    *LISTDOMAINS    `structs:",omitempty"`
+	*MAINDOMAINNAME `structs:",omitempty"`
+	*LISTDOMAINS    `structs:",omitempty"`
 }
 
 type Domain_Administration struct {
-	GETDOMAINALIASES     *GETDOMAINALIASES     `structs:",omitempty"`
-	UPDATEDOMAINSETTINGS *UPDATEDOMAINSETTINGS `structs:",omitempty"`
+	*GETDOMAINALIASES     `structs:",omitempty"`
+	*UPDATEDOMAINSETTINGS `structs:",omitempty"`
 }
 
 type MAINDOMAINNAME struct{}

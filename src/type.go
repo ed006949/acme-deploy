@@ -30,31 +30,13 @@ type xmlConfCGPs struct {
 	Domains map[string][]string `xml:"-"`
 }
 
-// type iniLEConf struct {
-// 	leDomain            string   `ini:"Le_Domain"`
-// 	leAlt               []string `ini:"Le_Alt" de//lim:","`
-// 	leRealCertPath      string   `ini:"Le_RealCertPath"`
-// 	leRealCACertPath    string   `ini:"Le_RealCACertPath"`
-// 	leRealKeyPath       string   `ini:"Le_RealKeyPath"`
-// 	leRealFullChainPath string   `ini:"Le_RealFullChainPath"`
-// }
-
-type iniLEConf struct {
-	Le_Domain            string
-	Le_Alt               []string `delim:","`
-	Le_RealCertPath      string
-	Le_RealCACertPath    string
-	Le_RealKeyPath       string
-	Le_RealFullChainPath string
-}
-
 type leConf struct {
-	leDomain            string
-	leAlt               []string
-	leRealCertPath      string
-	leRealCACertPath    string
-	leRealKeyPath       string
-	leRealFullChainPath string
-	cert                *io_crypto.Certificate
-	mxList              []string
+	LEDomain            string                 `ini:"Le_Domain"`
+	LEAlt               []string               `ini:"Le_Alt" delim:","`
+	LERealCertPath      string                 `ini:"Le_RealCertPath"`
+	LERealCACertPath    string                 `ini:"Le_RealCACertPath"`
+	LERealKeyPath       string                 `ini:"Le_RealKeyPath"`
+	LERealFullChainPath string                 `ini:"Le_RealFullChainPath"`
+	Certificate         *io_crypto.Certificate `ini:"-"`
+	// MXList              []string               `ini:"-"`
 }
