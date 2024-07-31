@@ -131,7 +131,7 @@ func X509KeyPair(certPEMBlock []byte, keyPEMBlock []byte) (outbound *Certificate
 		}
 	}
 
-	switch outbound.PrivateKey, err = parsePrivateKey(outbound.PrivateKeyDER); {
+	switch outbound.PrivateKey, err = ParsePrivateKey(outbound.PrivateKeyDER); {
 	case err != nil:
 		return nil, err
 	}
@@ -168,7 +168,7 @@ func X509KeyPair(certPEMBlock []byte, keyPEMBlock []byte) (outbound *Certificate
 
 	return
 }
-func parsePrivateKey(der []byte) (key crypto.PrivateKey, err error) {
+func ParsePrivateKey(der []byte) (key crypto.PrivateKey, err error) {
 	switch key, err = x509.ParsePKCS1PrivateKey(der); {
 	case err == nil:
 		return
