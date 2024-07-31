@@ -26,20 +26,7 @@ func load(vfsDB *io_vfs.VFSDB, iniFile string) (outbound *leConf, err error) {
 		return nil, errors.New("config data is not enough")
 	}
 
-	outbound.LEAlt = func() (interim []string) {
-		for _, b := range outbound.LEAlt {
-			switch {
-			case b == "no": // OPNSense and acme.sh, alt domain name = "no" ????
-				continue
-			}
-			interim = append(interim, b)
-		}
-		return
-	}()
-
-	// outbound.LEAlt = l.FilterSliceString(outbound.LEAlt, "no") // OPNSense and acme.sh, alt domain name = "no" ????
 	outbound.LEAlt = l.FilterSlice(outbound.LEAlt, "no") // OPNSense and acme.sh, alt domain name = "no" ????
-	// outbound.LEAlt = slices.Delete(outbound.LEAlt, 0, 0)
 
 	switch outbound.Certificate, err = io_crypto.X509KeyPair(
 		vfsDB.MustReadFile(outbound.LERealFullChainPath),
