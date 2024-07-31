@@ -128,6 +128,7 @@ func (receiver *VFSDB) MustWriteVFS() {
 				orphanList[name] = struct{}{}
 			case orphanErr != nil: //												error
 				l.Critical.E(err, nil /* l.F{"name": name} */)
+
 			case dirEntry.Type() != orphanFileInfo.Mode().Type(): //				exist but different type
 				orphanList[name] = struct{}{}
 
