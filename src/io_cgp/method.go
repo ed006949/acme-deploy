@@ -34,7 +34,7 @@ func (receiver *Token) command(payload string) (outbound []string, err error) {
 	case err != nil:
 		return nil, err
 	case response.StatusCode != 200:
-		return nil, http.ErrNotSupported
+		return nil, l.EINVALRESPONSE
 	}
 
 	defer func() { _ = response.Body.Close() }()
@@ -60,7 +60,8 @@ func (receiver *Token) command(payload string) (outbound []string, err error) {
 // Command will execute only first command found
 func (receiver *Token) Command(inbound *Command) (outbound []string, err error) {
 	var (
-		payload string
+		payload       string
+		emptyResponse bool // check if response must be empty
 	)
 
 	switch {
@@ -76,11 +77,12 @@ func (receiver *Token) Command(inbound *Command) (outbound []string, err error) 
 				payload += inbound.Domain_Administration.GETDOMAINALIASES.compile()
 
 			case inbound.Domain_Administration.UPDATEDOMAINSETTINGS != nil:
+				emptyResponse = true
 				payload += inbound.Domain_Administration.UPDATEDOMAINSETTINGS.compile()
 
 				switch {
 				case l.PackageDryRun:
-					l.Informational.L(l.F{"CGP": receiver.Name, "payload len": len(payload)})
+					l.Debug.L(l.F{"CGP": receiver.Name, "payload len": len(payload)})
 					payload = ""
 				}
 
@@ -106,7 +108,14 @@ func (receiver *Token) Command(inbound *Command) (outbound []string, err error) 
 		}
 
 		l.Debug.L(l.F{"CGP": receiver.Name, "payload": payload})
-		return receiver.command(payload)
+		switch outbound, err = receiver.command(payload); {
+		case emptyResponse && outbound != nil:
+			return outbound, l.EINVALRESPONSE
+		// case emptyResponse && (outbound != nil || len(outbound) != 0):
+		// 	return outbound, l.EINVALRESPONSE
+		default:
+			return
+		}
 
 	default:
 		return nil, ECom

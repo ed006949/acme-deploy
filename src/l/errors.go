@@ -9,17 +9,19 @@ const (
 	ENEDATA
 	ENOCONF
 	EUEDATA
+	EINVALRESPONSE
 )
 
 var errorDescription = [...]string{
-	EORPHANED: "orphaned entry",
-	EDUPDATA:  "duplicate data",
-	EEXIST:    "already exists",
-	ENOTFOUND: "not found",
-	EINVAL:    "invalid argument",
-	ENEDATA:   "not enough data",
-	ENOCONF:   "not config",
-	EUEDATA:   "unexpected data",
+	EORPHANED:      "orphaned entry",
+	EDUPDATA:       "duplicate data",
+	EEXIST:         "already exists",
+	ENOTFOUND:      "not found",
+	EINVAL:         "invalid argument",
+	ENEDATA:        "not enough data",
+	ENOCONF:        "not config",
+	EUEDATA:        "unexpected data",
+	EINVALRESPONSE: "invalid response",
 }
 
 type errorNumber uint

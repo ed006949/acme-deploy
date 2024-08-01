@@ -273,7 +273,11 @@ func main() {
 				for _, h := range append(d, c) {
 					switch value, ok := leConfigMap[h]; {
 					case ok:
-						l.Informational.L(l.F{"LE certificate": value.LEDomain, "CGP domain": c})
+						l.Informational.L(l.F{
+							"LE certificate": value.LEDomain,
+							"CGP domain":     c,
+							"message":        "update",
+						})
 						switch updateDomainSettings, err = b.Command(
 							&io_cgp.Command{
 								Domain_Administration: &io_cgp.Domain_Administration{
@@ -296,11 +300,17 @@ func main() {
 								"result":         updateDomainSettings,
 							})
 							continue
-						case updateDomainSettings != nil:
-							l.Warning.E(l.EUEDATA, l.F{
+						// case updateDomainSettings != nil:
+						// 	l.Warning.E(l.EUEDATA, l.F{
+						// 		"LE certificate": value.LEDomain,
+						// 		"CGP domain":     c,
+						// 		"result":         updateDomainSettings,
+						// 	})
+						default:
+							l.Informational.L(l.F{
 								"LE certificate": value.LEDomain,
 								"CGP domain":     c,
-								"result":         updateDomainSettings,
+								"message":        "update OK",
 							})
 						}
 
