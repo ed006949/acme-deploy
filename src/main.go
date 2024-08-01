@@ -42,7 +42,6 @@ func main() {
 		// cliLECAPath        = flag.String("capath", os.Getenv("ACME_CHAIN_FILE"), "ACME_CHAIN_FILE")
 		// cliLEFullChainPath = flag.String("fullchainpath", os.Getenv("ACME_FULLCHAIN_FILE"), "ACME_FULLCHAIN_FILE")
 	)
-	// ./main.go:36:51: type error of l.ParseBool(os.Getenv("ACME_DEPLOY_DRYRUN")) does not match inferred type bool for E
 	//
 	//        $this->acme_env['DEPLOY_PROXMOXVE_USER'] = (string)$this->config->acme_proxmoxve_user;
 	//        $this->acme_env['DEPLOY_PROXMOXVE_SERVER'] = (string)$this->config->acme_proxmoxve_server;
