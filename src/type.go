@@ -17,7 +17,7 @@ type xmlConf struct {
 type xmlConfDaemon struct {
 	Name      string `xml:"name,attr,omitempty"`
 	Verbosity string `xml:"verbosity,attr,omitempty"`
-	DryRun    bool   `xml:"dry-run,attr,omitempty"`
+	DryRun    bool   `xml:"dryrun,attr,omitempty"`
 }
 
 type xmlConfACMEClients struct {

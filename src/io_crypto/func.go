@@ -9,7 +9,6 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
-	"errors"
 	"strings"
 )
 
@@ -88,7 +87,7 @@ func X509KeyPair(certPEMBlock []byte, keyPEMBlock []byte) (outbound *Certificate
 	}()
 	switch {
 	case len(outbound.CertificatesDER) == 0:
-		return nil, errors.New("tls: failed to find any \"CERTIFICATE\" PEM block")
+		return nil, EPEMNoDataCert
 	}
 	outbound.CertificateCAChainRawPEM = []byte(base64.RawStdEncoding.EncodeToString(outbound.CertificateCAChainDER))
 
@@ -107,7 +106,7 @@ func X509KeyPair(certPEMBlock []byte, keyPEMBlock []byte) (outbound *Certificate
 	}()
 	switch {
 	case len(outbound.PrivateKeyDER) == 0:
-		return nil, errors.New("tls: failed to find any \"PRIVATE KEY\" PEM block")
+		return nil, EPEMNoDataKey
 	}
 
 	for _, b := range outbound.CertificatesDER {
@@ -132,26 +131,26 @@ func X509KeyPair(certPEMBlock []byte, keyPEMBlock []byte) (outbound *Certificate
 	case *rsa.PublicKey:
 		switch priv, ok := outbound.PrivateKey.(*rsa.PrivateKey); {
 		case !ok:
-			return nil, errors.New("tls: private key type does not match public key type")
+			return nil, ETypeMismatchPrivKeyPubKey
 		case pub.N.Cmp(priv.N) != 0:
-			return nil, errors.New("tls: private key does not match public key")
+			return nil, EMismatchPrivKeyPubKey
 		}
 	case *ecdsa.PublicKey:
 		switch priv, ok := outbound.PrivateKey.(*ecdsa.PrivateKey); {
 		case !ok:
-			return nil, errors.New("tls: private key type does not match public key type")
+			return nil, ETypeMismatchPrivKeyPubKey
 		case pub.X.Cmp(priv.X) != 0 || pub.Y.Cmp(priv.Y) != 0:
-			return nil, errors.New("tls: private key does not match public key")
+			return nil, EMismatchPrivKeyPubKey
 		}
 	case ed25519.PublicKey:
 		switch priv, ok := outbound.PrivateKey.(ed25519.PrivateKey); {
 		case !ok:
-			return nil, errors.New("tls: private key type does not match public key type")
+			return nil, ETypeMismatchPrivKeyPubKey
 		case !bytes.Equal(priv.Public().(ed25519.PublicKey), pub):
-			return nil, errors.New("tls: private key does not match public key")
+			return nil, EMismatchPrivKeyPubKey
 		}
 	default:
-		return nil, errors.New("tls: unknown public key algorithm")
+		return nil, EUnknownAlgoPubKey
 	}
 
 	return
@@ -168,7 +167,7 @@ func ParsePrivateKey(der []byte) (key crypto.PrivateKey, err error) {
 		case *rsa.PrivateKey, *ecdsa.PrivateKey, ed25519.PrivateKey:
 			return value, nil
 		default:
-			return nil, errors.New("tls: found unknown private key type in PKCS#8 wrapping")
+			return nil, EUnknownTypePrivKey
 		}
 	}
 
@@ -177,5 +176,5 @@ func ParsePrivateKey(der []byte) (key crypto.PrivateKey, err error) {
 		return
 	}
 
-	return nil, errors.New("tls: failed to parse private key")
+	return nil, EX509ParsePrivKey
 }

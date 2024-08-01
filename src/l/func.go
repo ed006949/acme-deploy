@@ -1,7 +1,6 @@
 package l
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -44,7 +43,7 @@ func SetPackageDryRun(inbound any) error {
 		PackageDryRun = inboundValue
 		return nil
 	default:
-		return errors.New("unknown dry-run variable type")
+		return EINVAL
 	}
 }
 
@@ -60,7 +59,7 @@ func ParseBool(inbound string) (bool, error) {
 	case "0", "f", "n", "false", "no", "off":
 		return false, nil
 	default:
-		return false, errors.New("unknown bool string")
+		return false, EINVAL
 	}
 }
 
@@ -92,4 +91,8 @@ func IndexSlice[S ~[]E, E comparable, M map[E]struct{}](inbound S) (outbound M) 
 		outbound[b] = struct{}{}
 	}
 	return
+}
+
+func StripErr1[E comparable](inbound E, err error) (outbound E) {
+	return inbound
 }

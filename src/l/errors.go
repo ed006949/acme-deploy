@@ -7,6 +7,8 @@ const (
 	ENOTFOUND
 	EINVAL
 	ENEDATA
+	ENOCONF
+	EUEDATA
 )
 
 var errorDescription = [...]string{
@@ -16,6 +18,8 @@ var errorDescription = [...]string{
 	ENOTFOUND: "not found",
 	EINVAL:    "invalid argument",
 	ENEDATA:   "not enough data",
+	ENOCONF:   "not config",
+	EUEDATA:   "unexpected data",
 }
 
 type errorNumber uint

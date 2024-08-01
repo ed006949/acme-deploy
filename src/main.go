@@ -3,9 +3,11 @@ package main
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"io/fs"
 	"net"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -26,51 +28,127 @@ func main() {
 	_ = l.SetPackageVerbosity(zerolog.LevelInfoValue)
 
 	var (
-		err          error
-		configFile   = flag.String("config", "", "xml config file")
-		cliVerbosity = flag.String("verbosity", "", "verbosity level, overrides config")
-		cliDryRun    = flag.Bool("dry-run", false, "dry-run, overrides config")
-		xmlConfig    xmlConf
+		err       error
+		xmlConfig xmlConf
+
+		cliConfig    = flag.String("config", os.Getenv("ACME_DEPLOY_CONFIG"), "xml config file")
+		cliVerbosity = flag.String("verbosity", os.Getenv("ACME_DEPLOY_VERBOSITY"), "verbosity level, overrides config")
+		cliDryRun    = flag.Bool("dryrun", l.StripErr1(l.ParseBool(os.Getenv("ACME_DEPLOY_DRYRUN"))), "dryrun, overrides config")
+
+		// cliLEHome          = flag.String("home", os.Getenv("ACME_HOME_DIR"), "ACME_HOME_DIR")
+		// cliLECertHome      = flag.String("cert-home", os.Getenv("ACME_CERT_HOME_DIR"), "ACME_CERT_HOME_DIR")
+		// cliLECertPath      = flag.String("certpath", os.Getenv("ACME_CERT_FILE"), "ACME_CERT_FILE")
+		// cliLEKeyPath       = flag.String("keypath", os.Getenv("ACME_KEY_FILE"), "ACME_KEY_FILE")
+		// cliLECAPath        = flag.String("capath", os.Getenv("ACME_CHAIN_FILE"), "ACME_CHAIN_FILE")
+		// cliLEFullChainPath = flag.String("fullchainpath", os.Getenv("ACME_FULLCHAIN_FILE"), "ACME_FULLCHAIN_FILE")
 	)
+	// ./main.go:36:51: type error of l.ParseBool(os.Getenv("ACME_DEPLOY_DRYRUN")) does not match inferred type bool for E
+	//
+	//        $this->acme_env['DEPLOY_PROXMOXVE_USER'] = (string)$this->config->acme_proxmoxve_user;
+	//        $this->acme_env['DEPLOY_PROXMOXVE_SERVER'] = (string)$this->config->acme_proxmoxve_server;
+	//        $this->acme_env['DEPLOY_PROXMOXVE_SERVER_PORT'] = (string)$this->config->acme_proxmoxve_port;
+	//        $this->acme_env['DEPLOY_PROXMOXVE_NODE_NAME'] = (string)$this->config->acme_proxmoxve_nodename;
+	//        $this->acme_env['DEPLOY_PROXMOXVE_USER_REALM'] = (string)$this->config->acme_proxmoxve_realm;
+	//        $this->acme_env['DEPLOY_PROXMOXVE_API_TOKEN_NAME'] = (string)$this->config->acme_proxmoxve_tokenid;
+	//        $this->acme_env['DEPLOY_PROXMOXVE_API_TOKEN_KEY'] = (string)$this->config->acme_proxmoxve_tokenkey;
+	//
+	//        $this->acme_args[] = LeUtils::execSafe('--home %s', self::ACME_HOME_DIR);
+	//        $this->acme_args[] = LeUtils::execSafe('--cert-home %s', sprintf(self::ACME_CERT_HOME_DIR, $this->cert_id));
+	//        $this->acme_args[] = LeUtils::execSafe('--certpath %s', sprintf(self::ACME_CERT_FILE, $this->cert_id));
+	//        $this->acme_args[] = LeUtils::execSafe('--keypath %s', sprintf(self::ACME_KEY_FILE, $this->cert_id));
+	//        $this->acme_args[] = LeUtils::execSafe('--capath %s', sprintf(self::ACME_CHAIN_FILE, $this->cert_id));
+	//        $this->acme_args[] = LeUtils::execSafe('--fullchainpath %s', sprintf(self::ACME_FULLCHAIN_FILE, $this->cert_id));
+	//
+	//        _cdomain="$1"
+	//        _ckey="$2"
+	//        _ccert="$3"
+	//        _cca="$4"
+	//        _cfullchain="$5"
+	//
 
 	// parse CLI
 	flag.Parse()
+
+	switch {
+	case len(flag.Args()) == 5: // acme.sh deploy
+		l.Notice.L(l.F{
+			"args": fmt.Sprintf("%s", flag.Args()),
+		})
+		// xmlConfig = xmlConf{
+		// 	Daemon: &xmlConfDaemon{
+		// 		Name:      "acme-deploy-CLI",
+		// 		Verbosity: "info",
+		// 		DryRun:    true,
+		// 	},
+		// 	ACMEClients: []*xmlConfACMEClients{
+		// 		{
+		// 			Name: "CLI",
+		// 			Path: "",
+		// 		},
+		// 	},
+		// 	CGPs: nil,
+		// }
+	}
+
 	switch {
 	case !l.IsFlagExist("config"):
 		flag.Usage()
-		l.Critical.E(errors.New("config file is mandatory"), nil)
+		l.Critical.E(l.ENOCONF, nil)
 		fallthrough
 	case l.IsFlagExist("verbosity"):
 		_ = l.SetPackageVerbosity(*cliVerbosity)
 		fallthrough
-	case l.IsFlagExist("dry-run"):
+	case l.IsFlagExist("dryrun"):
 		_ = l.SetPackageDryRun(*cliDryRun)
 		fallthrough
 	default:
 	}
 
 	// parse Config
-	io_xml.MustUnmarshal(io_fs.MustReadFile(*configFile), &xmlConfig)
+	io_xml.MustUnmarshal(io_fs.MustReadFile(*cliConfig), &xmlConfig)
 	_ = l.SetPackageVerbosity(xmlConfig.Daemon.Verbosity)
 	_ = l.SetPackageDryRun(xmlConfig.Daemon.DryRun)
 	_ = l.SetPackageName(xmlConfig.Daemon.Name)
 
 	// re-parse CLI after Config, so CLI can override Config
-	// _ = l.SetPackageDryRun(*cliDryRun && l.IsFlagExist("dry-run"))
+	// _ = l.SetPackageDryRun(*cliDryRun && l.IsFlagExist("dryrun"))
 	switch {
 	case l.IsFlagExist("verbosity"):
 		_ = l.SetPackageVerbosity(*cliVerbosity)
 		fallthrough
-	case l.IsFlagExist("dry-run"):
+	case l.IsFlagExist("dryrun"):
 		_ = l.SetPackageDryRun(*cliDryRun)
 		fallthrough
 	default:
 	}
 
+	//
+	//        $this->acme_env['DEPLOY_PROXMOXVE_USER'] = (string)$this->config->acme_proxmoxve_user;
+	//        $this->acme_env['DEPLOY_PROXMOXVE_SERVER'] = (string)$this->config->acme_proxmoxve_server;
+	//        $this->acme_env['DEPLOY_PROXMOXVE_SERVER_PORT'] = (string)$this->config->acme_proxmoxve_port;
+	//        $this->acme_env['DEPLOY_PROXMOXVE_NODE_NAME'] = (string)$this->config->acme_proxmoxve_nodename;
+	//        $this->acme_env['DEPLOY_PROXMOXVE_USER_REALM'] = (string)$this->config->acme_proxmoxve_realm;
+	//        $this->acme_env['DEPLOY_PROXMOXVE_API_TOKEN_NAME'] = (string)$this->config->acme_proxmoxve_tokenid;
+	//        $this->acme_env['DEPLOY_PROXMOXVE_API_TOKEN_KEY'] = (string)$this->config->acme_proxmoxve_tokenkey;
+	//
+	//        $this->acme_args[] = LeUtils::execSafe('--home %s', self::ACME_HOME_DIR);
+	//        $this->acme_args[] = LeUtils::execSafe('--cert-home %s', sprintf(self::ACME_CERT_HOME_DIR, $this->cert_id));
+	//        $this->acme_args[] = LeUtils::execSafe('--certpath %s', sprintf(self::ACME_CERT_FILE, $this->cert_id));
+	//        $this->acme_args[] = LeUtils::execSafe('--keypath %s', sprintf(self::ACME_KEY_FILE, $this->cert_id));
+	//        $this->acme_args[] = LeUtils::execSafe('--capath %s', sprintf(self::ACME_CHAIN_FILE, $this->cert_id));
+	//        $this->acme_args[] = LeUtils::execSafe('--fullchainpath %s', sprintf(self::ACME_FULLCHAIN_FILE, $this->cert_id));
+	//
+	//  _cdomain="$1"
+	//  _ckey="$2"
+	//  _ccert="$3"
+	//  _cca="$4"
+	//  _cfullchain="$5"
+	//
+
 	l.Notice.L(l.F{
-		"config":    *configFile,
+		"config":    *cliConfig,
 		"verbosity": l.PackageVerbosity.String(),
-		"dry-run":   l.PackageDryRun,
+		"dryrun":    l.PackageDryRun,
 	})
 
 	// load data
@@ -140,7 +218,7 @@ func main() {
 		for _, d := range append(b.LEAlt, b.LEDomain) {
 			switch value, ok := leConfigMap[d]; {
 			case ok:
-				l.Warning.E(errors.New("duplicate data"), l.F{"LE certificate": value.LEDomain})
+				l.Warning.E(l.EDUPDATA, l.F{"LE certificate": value.LEDomain})
 				continue
 			}
 			leConfigMap[d] = b
@@ -243,7 +321,7 @@ func main() {
 							})
 							continue
 						case updateDomainSettings != nil:
-							l.Warning.E(errors.New("unexpected data"), l.F{
+							l.Warning.E(l.EUEDATA, l.F{
 								"LE certificate": value.LEDomain,
 								"CGP domain":     c,
 								"result":         updateDomainSettings,
