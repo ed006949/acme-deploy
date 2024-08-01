@@ -155,7 +155,7 @@ func main() {
 	// find acme.sh LE config files
 	for _, b := range vfsDB.List {
 		var (
-			syncFn = func(name string, dirEntry fs.DirEntry, err error) error {
+			findLEConf = func(name string, dirEntry fs.DirEntry, err error) error {
 				switch {
 				case err != nil:
 					l.Critical.E(err, l.F{"name": name})
@@ -166,12 +166,13 @@ func main() {
 				case fs.ModeSymlink:
 				case 0:
 					switch {
+					case strings.HasSuffix(name, ".csr.conf"): // skip CSR config files
 					case strings.HasSuffix(name, ".conf"):
 						var (
-							interimLEConf *leConf
+							interimLEConf = new(leConf)
 						)
 
-						switch interimLEConf, err = load(vfsDB, name); {
+						switch err = interimLEConf.load(vfsDB, name); {
 						case errors.Is(err, l.ENEDATA):
 							l.Debug.E(err, l.F{"file": name})
 						case err != nil:
@@ -187,7 +188,7 @@ func main() {
 			}
 		)
 
-		vfsDB.MustWalkDir(b, syncFn)
+		vfsDB.MustWalkDir(b, findLEConf)
 	}
 
 	for _, b := range leConfig {
@@ -299,7 +300,7 @@ func main() {
 								"CGP domain":     c,
 								"result":         updateDomainSettings,
 							})
-							continue
+							return
 						// case updateDomainSettings != nil:
 						// 	l.Warning.E(l.EUEDATA, l.F{
 						// 		"LE certificate": value.LEDomain,

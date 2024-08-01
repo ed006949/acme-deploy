@@ -6,13 +6,13 @@ import (
 )
 
 func (receiver severity) L(inbound map[string]interface{}) {
-	receiver.lAction(nil, inbound)
+	receiver.logAction(nil, inbound)
 }
 func (receiver severity) E(err error, inbound map[string]interface{}) {
-	receiver.lAction(err, inbound)
+	receiver.logAction(err, inbound)
 }
 
-func (receiver severity) lAction(err error, inbound map[string]interface{}) {
+func (receiver severity) logAction(err error, inbound map[string]interface{}) {
 	var (
 		event *zerolog.Event
 	)
@@ -47,6 +47,5 @@ func (receiver severity) lAction(err error, inbound map[string]interface{}) {
 	case PackageDryRun:
 		event.Any("dryRun", PackageDryRun)
 	}
-
 	event.AnErr("error", err).Fields(inbound).Send()
 }
