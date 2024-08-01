@@ -94,5 +94,6 @@ func IndexSlice[S ~[]E, E comparable, M map[E]struct{}](inbound S) (outbound M) 
 }
 
 func StripErr1[E comparable](inbound E, err error) (outbound E) {
+	// Debug.E(err, nil)
 	return inbound
 }

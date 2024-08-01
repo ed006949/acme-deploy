@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io/fs"
+	"os"
 	"path/filepath"
 
 	"github.com/avfs/avfs"
@@ -75,42 +76,102 @@ func (receiver *VFSDB) MustSymlink(oldname string, newname string) {
 		l.Critical.E(err, nil /*l.F{"oldname": oldname, "newname": newname}*/)
 	}
 }
+func (receiver *VFSDB) MustCopyFS2VFS() {
+	switch err := receiver.CopyFS2VFS(); {
+	case err != nil:
+		l.Critical.E(err, nil)
+	}
+}
 
-func (receiver *VFSDB) MustReadVFS() {
+func (receiver *VFSDB) CopyFS2VFS() (err error) {
 	for a, b := range receiver.List {
+		switch receiver.List[a], err = filepath.Abs(b); {
+		case err != nil:
+			return
+		}
 
-		receiver.List[a] = io_fs.MustAbs(b)
+		switch err = receiver.CopyFromFS2VFS(receiver.List[a]); {
+		case err != nil:
+			return
+		}
+	}
+	return
+}
 
-		io_fs.MustWalkDir(receiver.List[a], func(name string, dirEntry fs.DirEntry, err error) error {
+func (receiver *VFSDB) CopyFromFS2VFS(name string) (err error) {
+	var (
+		fn = func(name string, dirEntry fs.DirEntry, err error) (fnErr error) {
 			switch {
 			case err != nil:
-				l.Critical.E(err, l.F{"name": name})
+				return err
 			}
 
 			switch dirEntry.Type() {
 			case fs.ModeDir:
-				receiver.MustMkdirAll(name)
+				switch fnErr = receiver.VFS.MkdirAll(name, avfs.DefaultDirPerm); {
+				case fnErr != nil:
+					return
+				}
 
 			case fs.ModeSymlink:
 				var (
-					target = io_fs.MustReadLink(name)
+					target string
+					data   []byte
 				)
 
-				receiver.MustSymlink(target, name)
+				switch target, fnErr = os.Readlink(name); {
+				case fnErr != nil:
+					return
+				}
+
+				switch fnErr = receiver.VFS.Symlink(target, name); {
+				case fnErr != nil:
+					return
+				}
 
 				// FIXME implement fs.DirEntry Type() check in case of symlink->symlink / symlink->dir, etc ....
-				receiver.MustMkdirAll(io_fs.Dir(target))
-				receiver.MustWriteFile(target, io_fs.MustReadFile(name))
+				switch fnErr = receiver.VFS.MkdirAll(io_fs.Dir(target), avfs.DefaultDirPerm); {
+				case fnErr != nil:
+					return
+				}
+
+				switch data, fnErr = os.ReadFile(name); {
+				case fnErr != nil:
+					return
+				}
+				switch fnErr = receiver.VFS.WriteFile(target, data, avfs.DefaultFilePerm); {
+				case fnErr != nil:
+					return
+				}
 
 			case 0:
-				receiver.MustWriteFile(name, io_fs.MustReadFile(name))
+				switch fnErr = receiver.VFS.MkdirAll(io_fs.Dir(name), avfs.DefaultDirPerm); {
+				case fnErr != nil:
+					return
+				}
+				switch fnErr = receiver.CopyFileFS2VFS(name); {
+				case fnErr != nil:
+					return
+				}
 
 			default:
 			}
 
-			return nil
-		})
+			return
+		}
+	)
+
+	switch name, err = filepath.Abs(name); {
+	case err != nil:
+		return
 	}
+
+	switch err = filepath.WalkDir(name, fn); {
+	case err != nil:
+		return
+	}
+
+	return
 }
 
 func (receiver *VFSDB) MustWriteVFS() {
@@ -205,4 +266,24 @@ func (receiver *VFSDB) MustGlob(pattern string) []string {
 }
 func (receiver *VFSDB) MustLGlob(listID string, pattern string) []string {
 	return receiver.MustGlob(receiver.MustGetFullAbs(listID, pattern))
+}
+
+func (receiver *VFSDB) CopyFileFS2VFS(name string) (err error) {
+	var (
+		data []byte
+	)
+
+	// switch name, err = filepath.Abs(name); {
+	// case err != nil:
+	// 	return
+	// }
+	switch data, err = os.ReadFile(name); {
+	case err != nil:
+		return
+	}
+	switch err = receiver.VFS.WriteFile(name, data, avfs.DefaultFilePerm); {
+	case err != nil:
+		return
+	}
+	return
 }

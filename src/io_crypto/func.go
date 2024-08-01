@@ -10,6 +10,8 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"strings"
+
+	"acme-deploy/src/l"
 )
 
 //
@@ -51,6 +53,16 @@ type Certificate struct {
 	// SignedCertificateTimestamps contains an optional list of Signed
 	// Certificate Timestamps which will be served to clients that request it.
 	SignedCertificateTimestamps [][]byte
+}
+
+func MustX509KeyPair(certPEMBlock []byte, keyPEMBlock []byte) (outbound *Certificate) {
+	switch cert, err := X509KeyPair(certPEMBlock, keyPEMBlock); {
+	case err != nil:
+		l.Critical.E(err, nil)
+		return nil
+	default:
+		return cert
+	}
 }
 
 func X509KeyPair(certPEMBlock []byte, keyPEMBlock []byte) (outbound *Certificate, err error) {
