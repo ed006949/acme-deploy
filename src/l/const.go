@@ -39,3 +39,9 @@ const (
 // 	Local6                       // rfc3164
 // 	Local7                       // rfc3164
 // )
+
+const (
+	PackageFlagConfig    = "config"
+	PackageFlagVerbosity = "verbosity"
+	PackageFlagDryRun    = "dry-run"
+)

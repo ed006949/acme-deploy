@@ -3,6 +3,7 @@ package l
 import (
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -30,6 +31,9 @@ func SetPackageVerbosity(inbound string) error {
 }
 
 func SetPackageDryRun(inbound any) error {
+	PackageDryRun = true
+	return nil
+
 	switch inboundValue := inbound.(type) {
 	case string:
 		switch value, err := ParseBool(inboundValue); {
@@ -63,16 +67,6 @@ func ParseBool(inbound string) (bool, error) {
 	}
 }
 
-func IsFlagExist(name string) (outbound bool) {
-	flag.Visit(func(fn *flag.Flag) {
-		switch {
-		case fn.Name == name:
-			outbound = true
-		}
-	})
-	return
-}
-
 func FilterSlice[S ~[]E, E comparable](inbound S, filter ...E) (outbound S) {
 	var (
 		interim = IndexSlice(filter)
@@ -96,4 +90,25 @@ func IndexSlice[S ~[]E, E comparable, M map[E]struct{}](inbound S) (outbound M) 
 func StripErr1[E comparable](inbound E, err error) (outbound E) {
 	// Debug.E(err, nil)
 	return inbound
+}
+
+func FlagIsFlagExist(name string) (outbound bool) {
+	flag.Visit(func(fn *flag.Flag) {
+		switch {
+		case fn.Name == name:
+			outbound = true
+		}
+	})
+	return
+}
+
+func UrlParse(inbound string) (outbound *url.URL, err error) {
+	switch outbound, err = url.Parse(inbound); {
+	case err != nil:
+		return nil, err
+	case len(outbound.String()) == 0:
+		return nil, ENODATA
+	default:
+		return outbound, nil
+	}
 }

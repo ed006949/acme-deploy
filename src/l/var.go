@@ -7,5 +7,5 @@ import (
 var (
 	PackageName      string
 	PackageVerbosity = zerolog.InfoLevel
-	PackageDryRun    = false
+	PackageDryRun    = true // test
 )

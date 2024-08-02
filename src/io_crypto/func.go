@@ -162,7 +162,7 @@ func X509KeyPair(certPEMBlock []byte, keyPEMBlock []byte) (outbound *Certificate
 			return nil, EMismatchPrivKeyPubKey
 		}
 	default:
-		return nil, EUnknownAlgoPubKey
+		return nil, EUnknownPubKeyAlgo
 	}
 
 	return
@@ -179,7 +179,7 @@ func ParsePrivateKey(der []byte) (key crypto.PrivateKey, err error) {
 		case *rsa.PrivateKey, *ecdsa.PrivateKey, ed25519.PrivateKey:
 			return value, nil
 		default:
-			return nil, EUnknownTypePrivKey
+			return nil, EUnknownPrivKeyType
 		}
 	}
 

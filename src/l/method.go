@@ -39,13 +39,13 @@ func (receiver severity) logAction(err error, inbound map[string]interface{}) {
 	case Trace:
 		event = log.Trace()
 	default:
-		log.Error().Caller().Any("dryRun", PackageDryRun).Any("Severity", receiver).Err(EINVAL).Send()
+		log.Error().Caller().Any(PackageFlagDryRun, PackageDryRun).Any("Severity", receiver).Err(EINVAL).Send()
 		event = log.Error()
 	}
 
 	switch {
 	case PackageDryRun:
-		event.Any("dryRun", PackageDryRun)
+		event.Any(PackageFlagDryRun, PackageDryRun)
 	}
 	event.AnErr("error", err).Fields(inbound).Send()
 }

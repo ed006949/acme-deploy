@@ -1,44 +1,57 @@
 package main
 
 import (
+	"crypto/rsa"
 	"errors"
+	"flag"
+	"fmt"
 	"net"
 	"net/url"
 	"path/filepath"
 	"strconv"
 
 	"acme-deploy/src/io_cgp"
+	"acme-deploy/src/io_crypto"
 	"acme-deploy/src/l"
 )
 
 func main() {
 	var (
-		xmlConfig *xmlConf
+		err       error
+		xmlConfig = new(xmlConf)
 	)
 
-	switch xmlConfig, err = getConfig(); {
+	switch err = xmlConfig.getConfig(); {
 	case errors.Is(err, l.ENOCONF):
+		flag.PrintDefaults()
 		l.Critical.E(err, nil)
 	case err != nil:
+		flag.PrintDefaults()
 		l.Critical.E(err, nil)
 	}
 
 	// load data
 	var (
-		leConfig    = make(map[string]*leConf)
-		leConfigMap = make(map[string]*leConf)
-		// MXList = make(map[string]struct{})
-	)
-
-	for _, b := range leConfig {
-		for _, d := range append(b.LEAlt, b.LEDomain) {
-			switch value, ok := leConfigMap[d]; {
-			case ok:
-				l.Warning.E(l.EDUPDATA, l.F{"LE certificate": value.LEDomain})
-				continue
+		leConfigMap = func() (outbound map[string]*leConf) {
+			outbound = make(map[string]*leConf)
+			for _, b := range xmlConfig.ACMEClients {
+				for _, d := range b.LEConf {
+					for _, f := range append(d.LEAlt, d.LEDomain) {
+						switch value, ok := outbound[f]; {
+						case ok:
+							l.Warning.E(l.EDUPDATA, l.F{"LE certificate": value.LEDomain})
+							continue
+						}
+						outbound[f] = d
+					}
+				}
 			}
-			leConfigMap[d] = b
-		}
+			return
+		}()
+	)
+	switch {
+	case len(leConfigMap) == 0:
+		l.Critical.E(l.ENOCONF, l.F{"message": "no ACME client config"})
 	}
 
 	for _, b := range xmlConfig.CGPs {
@@ -49,7 +62,7 @@ func main() {
 			b.Token.URL = &url.URL{
 				Scheme: b.Token.Scheme,
 				User:   url.UserPassword(b.Token.Username, b.Token.Password),
-				Path:   "/" + filepath.Join(b.Token.Path) + "/", // CGP needs path separator at the end of the path
+				Path:   b.Token.Path,
 				Host: func() string {
 					switch b.Token.Port {
 					case 0:
@@ -63,6 +76,7 @@ func main() {
 				}(),
 			}
 		}
+		b.Token.URL.Path = filepath.Join(b.Token.URL.Path) + "/" // CGP needs path separator at the end of the path
 
 		var (
 			listDomains          []string
@@ -78,7 +92,7 @@ func main() {
 			},
 		); {
 		case err != nil:
-			l.Error.E(err, l.F{"CGP domain": b.Token.Name, "result": listDomains})
+			l.Error.E(err, l.F{"message": "LISTDOMAINS", "CGP domain": b.Token.Name, "result": listDomains})
 			continue
 		}
 
@@ -93,7 +107,7 @@ func main() {
 				},
 			); {
 			case err != nil:
-				l.Error.E(err, l.F{"CGP domain": b.Token.Name, "result": getDomainAliases})
+				l.Error.E(err, l.F{"message": "GETDOMAINALIASES", "CGP domain": b.Token.Name, "result": getDomainAliases})
 				continue
 			}
 
@@ -106,10 +120,35 @@ func main() {
 					switch value, ok := leConfigMap[h]; {
 					case ok:
 						l.Informational.L(l.F{
+							"message":        "UPDATEDOMAINSETTINGS",
 							"LE certificate": value.LEDomain,
 							"CGP domain":     c,
-							"message":        "update",
 						})
+
+						switch privateKey := value.Certificate.PrivateKey.(type) {
+						case *rsa.PrivateKey:
+							switch privateKey.Size() {
+							case 512, 1024, 2048, 4096:
+							default:
+								l.Warning.E(io_crypto.EPrivKeySize, l.F{
+									"message":        "CGP supports RSA only 512, 1024, 2048 or 4096 bits",
+									"LE certificate": value.LEDomain,
+									"CGP domain":     c,
+									"type":           fmt.Sprintf("%T", value.Certificate.PrivateKey),
+									"size":           privateKey.Size,
+								})
+								return
+							}
+						default:
+							l.Warning.E(io_crypto.EPrivKeyType, l.F{
+								"message":        "CGP supports only RSA and only 512, 1024, 2048 or 4096 bits",
+								"LE certificate": value.LEDomain,
+								"CGP domain":     c,
+								"type":           fmt.Sprintf("%T", value.Certificate.PrivateKey),
+							})
+							return
+						}
+
 						switch updateDomainSettings, err = b.Command(
 							&io_cgp.Command{
 								Domain_Administration: &io_cgp.Domain_Administration{
@@ -127,22 +166,24 @@ func main() {
 						); {
 						case err != nil:
 							l.Error.E(err, l.F{
+								"message":        "UPDATEDOMAINSETTINGS",
 								"LE certificate": value.LEDomain,
 								"CGP domain":     c,
 								"result":         updateDomainSettings,
 							})
 							return
-						// case updateDomainSettings != nil:
-						// 	l.Warning.E(l.EUEDATA, l.F{
-						// 		"LE certificate": value.LEDomain,
-						// 		"CGP domain":     c,
-						// 		"result":         updateDomainSettings,
-						// 	})
-						default:
-							l.Informational.L(l.F{
+						case updateDomainSettings != nil:
+							l.Warning.E(l.EUEDATA, l.F{
+								"message":        "UPDATEDOMAINSETTINGS OK",
 								"LE certificate": value.LEDomain,
 								"CGP domain":     c,
-								"message":        "update OK",
+								"result":         updateDomainSettings,
+							})
+						default:
+							l.Informational.L(l.F{
+								"message":        "UPDATEDOMAINSETTINGS OK",
+								"LE certificate": value.LEDomain,
+								"CGP domain":     c,
 							})
 						}
 

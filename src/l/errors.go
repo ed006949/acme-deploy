@@ -6,6 +6,7 @@ const (
 	EEXIST
 	ENOTFOUND
 	EINVAL
+	ENODATA
 	ENEDATA
 	ENOCONF
 	EUEDATA
@@ -18,6 +19,7 @@ var errorDescription = [...]string{
 	EEXIST:         "already exists",
 	ENOTFOUND:      "not found",
 	EINVAL:         "invalid argument",
+	ENODATA:        "not data",
 	ENEDATA:        "not enough data",
 	ENOCONF:        "not config",
 	EUEDATA:        "unexpected data",

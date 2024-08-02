@@ -4,8 +4,10 @@ const (
 	EX509ParsePrivKey errorNumber = iota
 	EPEMNoDataKey
 	EPEMNoDataCert
-	EUnknownTypePrivKey
-	EUnknownAlgoPubKey
+	EUnknownPrivKeyType
+	EUnknownPubKeyAlgo
+	EPrivKeyType
+	EPrivKeySize
 	ETypeMismatchPrivKeyPubKey
 	EMismatchPrivKeyPubKey
 )
@@ -14,8 +16,10 @@ var errorDescription = [...]string{
 	EX509ParsePrivKey:          "x509: failed to parse private key",
 	EPEMNoDataKey:              "PEM: failed to find any PRIVATE KEY data",
 	EPEMNoDataCert:             "PEM: failed to find any CERTIFICATE data",
-	EUnknownTypePrivKey:        "unknown private key type",
-	EUnknownAlgoPubKey:         "unknown public key algorithm",
+	EUnknownPrivKeyType:        "unknown private key type",
+	EUnknownPubKeyAlgo:         "unknown public key algorithm",
+	EPrivKeyType:               "wrong private key type",
+	EPrivKeySize:               "wrong private key size",
 	ETypeMismatchPrivKeyPubKey: "private key type does not match public key type",
 	EMismatchPrivKeyPubKey:     "private key does not match public key",
 }

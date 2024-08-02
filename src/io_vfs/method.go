@@ -8,7 +8,9 @@ import (
 	"path/filepath"
 
 	"github.com/avfs/avfs"
+	"github.com/go-ini/ini"
 
+	"acme-deploy/src/io_crypto"
 	"acme-deploy/src/io_fs"
 	"acme-deploy/src/l"
 )
@@ -286,4 +288,64 @@ func (receiver *VFSDB) CopyFileFS2VFS(name string) (err error) {
 		return
 	}
 	return
+}
+
+func (receiver *VFSDB) LoadX509KeyPair(chain string, key string) (outbound *io_crypto.Certificate, err error) {
+	var (
+		chainData []byte
+		keyData   []byte
+		cert      *io_crypto.Certificate
+	)
+	switch chainData, err = receiver.VFS.ReadFile(chain); {
+	case err != nil:
+		return
+	}
+	switch keyData, err = receiver.VFS.ReadFile(key); {
+	case err != nil:
+		return
+	}
+	switch cert, err = io_crypto.X509KeyPair(chainData, keyData); {
+	case err != nil:
+		return
+	}
+	return cert, nil
+}
+func (receiver *VFSDB) LoadIniMapTo(v any, source string) (err error) {
+	var (
+		data []byte
+	)
+	switch data, err = receiver.VFS.ReadFile(source); {
+	case err != nil:
+		return
+	}
+	return ini.MapTo(&v, data)
+
+	// var (
+	// 	dataSet []any
+	// )
+	// for _, b := range source {
+	// 	var (
+	// 		data []byte
+	// 	)
+	// 	switch data, err = receiver.VFS.ReadFile(b); {
+	// 	case err != nil:
+	// 		return
+	// 	}
+	// 	data = bytes.ReplaceAll(
+	// 		data,
+	// 		[]byte("/var/etc/acme-client/"),
+	// 		[]byte(receiver.List["acme-client"]+"/"),
+	// 	)
+	// 	dataSet = append(dataSet, data)
+	// }
+	//
+	// switch len(dataSet) {
+	// case 0:
+	// case 1:
+	// 	err = ini.MapTo(v, dataSet[0])
+	// default:
+	// 	err = ini.MapTo(v, dataSet[0], dataSet[1:]...)
+	// }
+	//
+	// return
 }

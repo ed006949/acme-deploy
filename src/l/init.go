@@ -10,4 +10,7 @@ func init() {
 
 	// set default log level while init
 	_ = SetPackageVerbosity(zerolog.LevelInfoValue)
+
+	// set dry-run while init
+	_ = SetPackageDryRun(false)
 }
