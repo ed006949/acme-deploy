@@ -16,7 +16,7 @@ func (receiver *Token) command(payload string) (outbound []string, err error) {
 	var (
 		request  *http.Request
 		response *http.Response
-		interim  = receiver.URL
+		interim  = *receiver.URL
 		delim    = regexp.MustCompile(`[,\(\)]`)
 		buffer   = new(bytes.Buffer)
 	)
@@ -33,11 +33,16 @@ func (receiver *Token) command(payload string) (outbound []string, err error) {
 	switch response, err = http.DefaultClient.Do(request); {
 	case err != nil:
 		return nil, err
+	}
+	defer func() { _ = response.Body.Close() }()
+
+	switch {
 	case response.StatusCode != 200:
+		l.Error.E(l.EINVALRESPONSE, l.F{ //
+			"message": response.Body, //
+		}) //
 		return nil, l.EINVALRESPONSE
 	}
-
-	defer func() { _ = response.Body.Close() }()
 
 	switch _, err = buffer.ReadFrom(response.Body); {
 	case err != nil:
@@ -82,7 +87,7 @@ func (receiver *Token) Command(inbound *Command) (outbound []string, err error) 
 
 				switch {
 				case l.DryRun.Value():
-					l.Debug.L(l.F{"CGP": receiver.Name, "payload len": len(payload)})
+					l.Debug.L(l.F{"CGP server": receiver.Name, "payload len": len(payload)})
 					payload = ""
 				}
 
@@ -109,6 +114,8 @@ func (receiver *Token) Command(inbound *Command) (outbound []string, err error) 
 
 		l.Debug.L(l.F{"CGP": receiver.Name, "payload": payload})
 		switch outbound, err = receiver.command(payload); {
+		case err != nil:
+			return
 		case emptyResponse && outbound != nil:
 			return outbound, l.EINVALRESPONSE
 		default:

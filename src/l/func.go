@@ -15,7 +15,7 @@ import (
 
 func (receiver name) Set(inbound string)             { pControl.name = inbound }
 func (receiver config) Set(inbound string)           { pControl.config = inbound }
-func (receiver dryRun) Set(inbound bool)             { pControl.dryRun = true }
+func (receiver dryRun) Set(inbound bool)             { pControl.dryRun = inbound }
 func (receiver verbosity) Set(inbound zerolog.Level) { setVerbosity(inbound) }
 
 func (receiver dryRun) SetString(inbound string) error {
