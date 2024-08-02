@@ -21,7 +21,7 @@ func main() {
 		xmlConfig = new(xmlConf)
 	)
 
-	switch err = xmlConfig.getConfig(); {
+	switch err = xmlConfig.load(); {
 	case errors.Is(err, l.ENOCONF):
 		flag.PrintDefaults()
 		l.Critical.E(err, nil)
