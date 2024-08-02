@@ -31,9 +31,6 @@ func SetPackageVerbosity(inbound string) error {
 }
 
 func SetPackageDryRun(inbound any) error {
-	PackageDryRun = true
-	return nil
-
 	switch inboundValue := inbound.(type) {
 	case string:
 		switch value, err := ParseBool(inboundValue); {

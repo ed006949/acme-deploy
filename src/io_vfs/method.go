@@ -275,10 +275,6 @@ func (receiver *VFSDB) CopyFileFS2VFS(name string) (err error) {
 		data []byte
 	)
 
-	// switch name, err = filepath.Abs(name); {
-	// case err != nil:
-	// 	return
-	// }
 	switch data, err = os.ReadFile(name); {
 	case err != nil:
 		return
@@ -294,7 +290,6 @@ func (receiver *VFSDB) LoadX509KeyPair(chain string, key string) (outbound *io_c
 	var (
 		chainData []byte
 		keyData   []byte
-		cert      *io_crypto.Certificate
 	)
 	switch chainData, err = receiver.VFS.ReadFile(chain); {
 	case err != nil:
@@ -304,11 +299,11 @@ func (receiver *VFSDB) LoadX509KeyPair(chain string, key string) (outbound *io_c
 	case err != nil:
 		return
 	}
-	switch cert, err = io_crypto.X509KeyPair(chainData, keyData); {
+	switch outbound, err = io_crypto.X509KeyPair(chainData, keyData); {
 	case err != nil:
-		return
+		return nil, err
 	}
-	return cert, nil
+	return
 }
 func (receiver *VFSDB) LoadIniMapTo(v any, source string) (err error) {
 	var (

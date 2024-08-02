@@ -108,7 +108,7 @@ func (receiver *xmlConf) load() (err error) {
 				Name: _c_deploy,
 				Path: "",
 				LEConf: map[string]*leConf{
-					flag.Arg(0): {
+					args[0]: {
 						LEDomain:            args[0],
 						LEAlt:               nil,
 						LERealKeyPath:       args[1],

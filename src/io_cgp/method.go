@@ -111,8 +111,6 @@ func (receiver *Token) Command(inbound *Command) (outbound []string, err error) 
 		switch outbound, err = receiver.command(payload); {
 		case emptyResponse && outbound != nil:
 			return outbound, l.EINVALRESPONSE
-		// case emptyResponse && (outbound != nil || len(outbound) != 0):
-		// 	return outbound, l.EINVALRESPONSE
 		default:
 			return
 		}

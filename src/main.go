@@ -92,7 +92,11 @@ func main() {
 			},
 		); {
 		case err != nil:
-			l.Error.E(err, l.F{"message": "LISTDOMAINS", "CGP domain": b.Token.Name, "result": listDomains})
+			l.Error.E(err, l.F{
+				"message":    "LISTDOMAINS",
+				"CGP domain": b.Token.Name,
+				"result":     listDomains,
+			})
 			continue
 		}
 
@@ -107,7 +111,11 @@ func main() {
 				},
 			); {
 			case err != nil:
-				l.Error.E(err, l.F{"message": "GETDOMAINALIASES", "CGP domain": b.Token.Name, "result": getDomainAliases})
+				l.Error.E(err, l.F{
+					"message":    "GETDOMAINALIASES",
+					"CGP domain": b.Token.Name,
+					"result":     getDomainAliases,
+				})
 				continue
 			}
 
