@@ -31,6 +31,9 @@ endif
 diff:
 	git diff
 
+execute:
+	./bin/${NAME} ${COMMAND_LINE}
+
 init:
 	go mod init ${TARGET}
 	go get -u ./...
@@ -40,7 +43,7 @@ install:
 	@echo ${NAME} ${PACKAGE} ${TARGET} ${DATE} ${GIT_STATUS}
 
 race:
-	go run -race ./...
+	go run -race ./... ${COMMAND_LINE}
 
 release: commit
 	git tag v${VERSION}
@@ -48,7 +51,7 @@ release: commit
 	gh release create v${VERSION} --generate-notes --latest=true
 
 run:
-	go run -ldflags="-s -w" -trimpath ./...
+	go run -ldflags="-s -w" -trimpath ./... ${COMMAND_LINE}
 
 status:
 	git status

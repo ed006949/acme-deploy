@@ -6,6 +6,8 @@ PACKAGE		:=	${ORIGIN}/${NAME}
 
 TARGET		:=	${NAME}
 
+COMMAND_LINE	:=	--config="./etc/${NAME}.xml" --dry-run
+
 GITIGNORE_URL	:=	https://www.toptal.com/developers/gitignore/api/go,linux,macos,windows,jetbrains,jetbrains+all,jetbrains+iml,visualstudiocode,xcode,xcodeinjection
 
 #GPG_KEY		:=	A2FC1F3EF2AC4B53
@@ -15,4 +17,4 @@ GITIGNORE_URL	:=	https://www.toptal.com/developers/gitignore/api/go,linux,macos,
 #
 #
 execute:
-	./bin/${NAME} --config="./etc/${NAME}.xml"
+	./bin/${NAME} ${COMMAND_LINE}

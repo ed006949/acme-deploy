@@ -47,7 +47,7 @@ func main() {
 		case err != nil:
 			l.Error.E(err, l.F{
 				"message":    "LISTDOMAINS",
-				"CGP domain": b.Token.Name,
+				"CGP server": b.Token.Name,
 				"result":     listDomains,
 			})
 			continue
