@@ -5,7 +5,10 @@ import (
 )
 
 var (
-	PackageName      string
-	PackageVerbosity = zerolog.InfoLevel
-	PackageDryRun    = true // test
+	pControl = &pControlStruct{
+		name:      "",
+		config:    "",
+		verbosity: zerolog.InfoLevel,
+		dryRun:    false,
+	}
 )

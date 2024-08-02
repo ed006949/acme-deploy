@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,45 +13,56 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func SetPackageVerbosity(inbound string) error {
+func (receiver name) Set(inbound string)             { pControl.name = inbound }
+func (receiver config) Set(inbound string)           { pControl.config = inbound }
+func (receiver dryRun) Set(inbound bool)             { pControl.dryRun = true }
+func (receiver verbosity) Set(inbound zerolog.Level) { setVerbosity(inbound) }
+
+func (receiver dryRun) SetString(inbound string) error {
+	switch value, err := ParseBool(inbound); {
+	case err != nil:
+		return err
+	default:
+		pControl.dryRun = value
+		return nil
+	}
+}
+func (receiver verbosity) SetString(inbound string) error {
 	switch value, err := zerolog.ParseLevel(inbound); {
 	case err != nil:
 		return err
 	case len(inbound) == 0 || value == zerolog.NoLevel:
 		return EINVAL
 	default:
-		zerolog.SetGlobalLevel(value) // how it works ....
-		log.Logger = log.Level(value).With().Timestamp().Caller().Logger().Output(zerolog.ConsoleWriter{
-			Out:              os.Stderr,
-			NoColor:          false,
-			TimeFormat:       time.RFC3339,
-			FormatFieldValue: func(i interface{}) string { return fmt.Sprintf("\"%s\"", i) },
-		})
+		setVerbosity(value)
 		return nil
 	}
 }
 
-func SetPackageDryRun(inbound any) error {
-	switch inboundValue := inbound.(type) {
-	case string:
-		switch value, err := ParseBool(inboundValue); {
-		case err != nil:
-			return err
-		default:
-			PackageDryRun = value
-			return nil
-		}
-	case bool:
-		PackageDryRun = inboundValue
-		return nil
-	default:
-		return EINVAL
-	}
-}
+func (receiver name) Value() string             { return pControl.name }      // Package Flag Value
+func (receiver config) Value() string           { return pControl.config }    // Package Flag Value
+func (receiver dryRun) Value() bool             { return pControl.dryRun }    // Package Flag Value
+func (receiver verbosity) Value() zerolog.Level { return pControl.verbosity } // Package Flag Value
 
-func SetPackageName(inbound string) error {
-	PackageName = inbound
-	return nil
+func (receiver name) String() string      { return pControl.name }                       // Package Flag String Value
+func (receiver config) String() string    { return pControl.config }                     // Package Flag String Value
+func (receiver dryRun) String() string    { return strconv.FormatBool(pControl.dryRun) } // Package Flag String Value
+func (receiver verbosity) String() string { return pControl.verbosity.String() }         // Package Flag String Value
+
+func (receiver name) Name() string      { return string(Name) }      // Package Flag Name
+func (receiver config) Name() string    { return string(Config) }    // Package Flag Name
+func (receiver dryRun) Name() string    { return string(DryRun) }    // Package Flag Name
+func (receiver verbosity) Name() string { return string(Verbosity) } // Package Flag Name
+
+func setVerbosity(inbound zerolog.Level) {
+	pControl.verbosity = inbound
+	zerolog.SetGlobalLevel(pControl.verbosity) // how it works ....
+	log.Logger = log.Level(pControl.verbosity).With().Timestamp().Caller().Logger().Output(zerolog.ConsoleWriter{
+		Out:              os.Stderr,
+		NoColor:          false,
+		TimeFormat:       time.RFC3339,
+		FormatFieldValue: func(i interface{}) string { return fmt.Sprintf("\"%s\"", i) },
+	})
 }
 
 func ParseBool(inbound string) (bool, error) {
@@ -84,6 +96,9 @@ func IndexSlice[S ~[]E, E comparable, M map[E]struct{}](inbound S) (outbound M) 
 	return
 }
 
+func StripErr0(err error) {
+	// Debug.E(err, nil)
+}
 func StripErr1[E comparable](inbound E, err error) (outbound E) {
 	// Debug.E(err, nil)
 	return inbound

@@ -81,7 +81,7 @@ func (receiver *Token) Command(inbound *Command) (outbound []string, err error) 
 				payload += inbound.Domain_Administration.UPDATEDOMAINSETTINGS.compile()
 
 				switch {
-				case l.PackageDryRun:
+				case l.DryRun.Value():
 					l.Debug.L(l.F{"CGP": receiver.Name, "payload len": len(payload)})
 					payload = ""
 				}

@@ -6,8 +6,11 @@ import (
 	"errors"
 	"flag"
 	"io/fs"
+	"net"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/avfs/avfs"
@@ -69,9 +72,9 @@ func (receiver *xmlConf) load() (err error) {
 			}),
 		}
 
-		cliConfig    = flag.String(l.PackageFlagConfig, os.Getenv("ACME_DEPLOY_CONFIG"), "xml config file")
-		cliVerbosity = flag.String(l.PackageFlagVerbosity, os.Getenv("ACME_DEPLOY_VERBOSITY"), "verbosity level, overrides config")
-		cliDryRun    = flag.Bool(l.PackageFlagDryRun, l.StripErr1(l.ParseBool(os.Getenv("ACME_DEPLOY_DRYRUN"))), "dry run, overrides config")
+		cliConfig    = flag.String(l.Config.Name(), os.Getenv("ACME_DEPLOY_CONFIG"), "xml config file")
+		cliVerbosity = flag.String(l.Verbosity.Name(), os.Getenv("ACME_DEPLOY_VERBOSITY"), "verbosity level, overrides config")
+		cliDryRun    = flag.Bool(l.DryRun.Name(), l.StripErr1(l.ParseBool(os.Getenv("ACME_DEPLOY_DRYRUN"))), "dry run, overrides config")
 
 		// cliLEHome          = flag.String("home", os.Getenv("ACME_HOME_DIR"), "ACME_HOME_DIR")
 		// cliLECertHome      = flag.String("cert-home", os.Getenv("ACME_CERT_HOME_DIR"), "ACME_CERT_HOME_DIR")
@@ -84,6 +87,8 @@ func (receiver *xmlConf) load() (err error) {
 	)
 
 	flag.Parse()
+
+	receiver.LEConfMap = make(map[string]*leConf)
 
 	switch {
 	case len(flag.Args()) == 5: // acme.sh deploy
@@ -100,8 +105,8 @@ func (receiver *xmlConf) load() (err error) {
 
 		receiver.Daemon = &xmlConfDaemon{
 			Name:      _c_deploy,
-			Verbosity: l.PackageVerbosity.String(),
-			DryRun:    l.PackageDryRun,
+			Verbosity: l.Verbosity.String(),
+			DryRun:    l.DryRun.Value(),
 		}
 		receiver.ACMEClients = []*xmlConfACMEClients{
 			{
@@ -148,15 +153,13 @@ func (receiver *xmlConf) load() (err error) {
 		l.Informational.L(l.F{"message": _c_deploy, "LEAlt": receiver.ACMEClients[0].LEConf[args[0]].LEAlt})
 		l.Informational.L(l.F{"message": _c_deploy, "CN": receiver.ACMEClients[0].LEConf[args[0]].Certificate.Certificates[0].Subject.CommonName})
 
-		return
-
 	case len(*cliConfig) != 0: // CLI
 		switch {
-		case l.FlagIsFlagExist(l.PackageFlagVerbosity):
-			_ = l.SetPackageVerbosity(*cliVerbosity)
+		case l.FlagIsFlagExist(l.Verbosity.Name()):
+			_ = l.Verbosity.SetString(*cliVerbosity)
 			fallthrough
-		case l.FlagIsFlagExist(l.PackageFlagDryRun):
-			_ = l.SetPackageDryRun(*cliDryRun)
+		case l.FlagIsFlagExist(l.DryRun.Name()):
+			l.DryRun.Set(*cliDryRun)
 			fallthrough
 		default:
 		}
@@ -183,15 +186,15 @@ func (receiver *xmlConf) load() (err error) {
 			return
 		}
 
-		_ = l.SetPackageVerbosity(receiver.Daemon.Verbosity)
-		_ = l.SetPackageDryRun(receiver.Daemon.DryRun)
-		_ = l.SetPackageName(receiver.Daemon.Name)
+		_ = l.Verbosity.SetString(receiver.Daemon.Verbosity)
+		l.DryRun.Set(receiver.Daemon.DryRun)
+		l.Name.Set(receiver.Daemon.Name)
 		switch {
-		case l.FlagIsFlagExist(l.PackageFlagVerbosity):
-			_ = l.SetPackageVerbosity(*cliVerbosity)
+		case l.FlagIsFlagExist(l.Verbosity.Name()):
+			_ = l.Verbosity.SetString(*cliVerbosity)
 			fallthrough
-		case l.FlagIsFlagExist(l.PackageFlagDryRun):
-			_ = l.SetPackageDryRun(*cliDryRun)
+		case l.FlagIsFlagExist(l.DryRun.Name()):
+			l.DryRun.Set(*cliDryRun)
 			fallthrough
 		default:
 		}
@@ -240,7 +243,7 @@ func (receiver *xmlConf) load() (err error) {
 						default:
 						}
 
-						return nil
+						return
 					}
 				)
 
@@ -251,9 +254,51 @@ func (receiver *xmlConf) load() (err error) {
 			}
 		}
 
-		return
-
 	default:
 		return l.ENOCONF
 	}
+
+	for _, b := range receiver.CGPs {
+		b.Domains = make(map[string][]string)
+		switch {
+		case b.Token.URL == nil:
+			b.Token.URL = &url.URL{
+				Scheme: b.Token.Scheme,
+				User:   url.UserPassword(b.Token.Username, b.Token.Password),
+				Path:   b.Token.Path,
+				Host: func() string {
+					switch b.Token.Port {
+					case 0:
+						return b.Token.Host
+					default:
+						return net.JoinHostPort(
+							b.Token.Host,
+							strconv.FormatUint(uint64(b.Token.Port), 10),
+						)
+					}
+				}(),
+			}
+		}
+		b.Token.URL.Path = filepath.Join(b.Token.URL.Path) + "/" // CGP needs path separator at the end of the path
+	}
+
+	for _, b := range receiver.ACMEClients {
+		for _, d := range b.LEConf {
+			for _, f := range append(d.LEAlt, d.LEDomain) {
+				switch value, ok := receiver.LEConfMap[f]; {
+				case ok:
+					l.Warning.E(l.EDUPDATA, l.F{"LE certificate": value.LEDomain})
+					continue
+				}
+				receiver.LEConfMap[f] = d
+			}
+		}
+	}
+
+	switch {
+	case len(receiver.LEConfMap) == 0:
+		return l.ENEDATA
+	}
+
+	return
 }

@@ -12,6 +12,7 @@ type xmlConf struct {
 	Daemon      *xmlConfDaemon        `xml:"daemon,omitempty"`
 	ACMEClients []*xmlConfACMEClients `xml:"acme-clients>acme-client,omitempty"`
 	CGPs        []*xmlConfCGPs        `xml:"cgps>cgp,omitempty"`
+	LEConfMap   map[string]*leConf    `xml:"-"`
 }
 
 type xmlConfDaemon struct {

@@ -1,6 +1,13 @@
 package l
 
 const (
+	Name      name      = "name"
+	Config    config    = "config"
+	DryRun    dryRun    = "dry-run"
+	Verbosity verbosity = "verbosity"
+)
+
+const (
 	Panic         severity = iota - 1
 	Emergency              // rfc3164
 	Alert                  // rfc3164
@@ -39,9 +46,3 @@ const (
 // 	Local6                       // rfc3164
 // 	Local7                       // rfc3164
 // )
-
-const (
-	PackageFlagConfig    = "config"
-	PackageFlagVerbosity = "verbosity"
-	PackageFlagDryRun    = "dry-run"
-)

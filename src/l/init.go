@@ -5,12 +5,12 @@ import (
 )
 
 func init() {
-	// log function call nesting depth is 2
+	// l.log function call nesting depth is 2
 	zerolog.CallerSkipFrameCount = zerolog.CallerSkipFrameCount + 2
 
-	// set default log level while init
-	_ = SetPackageVerbosity(zerolog.LevelInfoValue)
-
-	// set dry-run while init
-	_ = SetPackageDryRun(false)
+	// set defaults while init
+	Name.Set(pControl.name)
+	Config.Set(pControl.config)
+	Verbosity.Set(pControl.verbosity)
+	DryRun.Set(pControl.dryRun)
 }

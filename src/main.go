@@ -5,10 +5,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"net"
-	"net/url"
-	"path/filepath"
-	"strconv"
 
 	"acme-deploy/src/io_cgp"
 	"acme-deploy/src/io_crypto"
@@ -30,60 +26,17 @@ func main() {
 		l.Critical.E(err, nil)
 	}
 
-	// load data
-	var (
-		leConfigMap = func() (outbound map[string]*leConf) {
-			outbound = make(map[string]*leConf)
-			for _, b := range xmlConfig.ACMEClients {
-				for _, d := range b.LEConf {
-					for _, f := range append(d.LEAlt, d.LEDomain) {
-						switch value, ok := outbound[f]; {
-						case ok:
-							l.Warning.E(l.EDUPDATA, l.F{"LE certificate": value.LEDomain})
-							continue
-						}
-						outbound[f] = d
-					}
-				}
-			}
-			return
-		}()
-	)
-	switch {
-	case len(leConfigMap) == 0:
-		l.Critical.E(l.ENOCONF, l.F{"message": "no ACME client config"})
-	}
-
 	for _, b := range xmlConfig.CGPs {
-		b.Domains = make(map[string][]string)
-
-		switch {
-		case b.Token.URL == nil:
-			b.Token.URL = &url.URL{
-				Scheme: b.Token.Scheme,
-				User:   url.UserPassword(b.Token.Username, b.Token.Password),
-				Path:   b.Token.Path,
-				Host: func() string {
-					switch b.Token.Port {
-					case 0:
-						return b.Token.Host
-					default:
-						return net.JoinHostPort(
-							b.Token.Host,
-							strconv.FormatUint(uint64(b.Token.Port), 10),
-						)
-					}
-				}(),
-			}
-		}
-		b.Token.URL.Path = filepath.Join(b.Token.URL.Path) + "/" // CGP needs path separator at the end of the path
-
 		var (
 			listDomains          []string
 			getDomainAliases     []string
 			updateDomainSettings []string
 		)
 
+		l.Debug.L(l.F{
+			"message":    "LISTDOMAINS",
+			"CGP server": b.Token.Name,
+		})
 		switch listDomains, err = b.Token.Command(
 			&io_cgp.Command{
 				Domain_Set_Administration: &io_cgp.Domain_Set_Administration{
@@ -99,8 +52,17 @@ func main() {
 			})
 			continue
 		}
+		l.Informational.L(l.F{
+			"message":    "LISTDOMAINS OK",
+			"CGP server": b.Token.Name,
+			"result":     len(listDomains),
+		})
 
 		for _, d := range listDomains {
+			l.Debug.L(l.F{
+				"message":    "GETDOMAINALIASES",
+				"CGP domain": b.Token.Name,
+			})
 			switch getDomainAliases, err = b.Token.Command(
 				&io_cgp.Command{
 					Domain_Administration: &io_cgp.Domain_Administration{
@@ -120,14 +82,19 @@ func main() {
 			}
 
 			b.Domains[d] = getDomainAliases
+			l.Informational.L(l.F{
+				"message":    "GETDOMAINALIASES OK",
+				"CGP domain": b.Token.Name,
+				"result":     len(getDomainAliases),
+			})
 		}
 
 		for c, d := range b.Domains {
 			func() {
 				for _, h := range append(d, c) {
-					switch value, ok := leConfigMap[h]; {
+					switch value, ok := xmlConfig.LEConfMap[h]; {
 					case ok:
-						l.Informational.L(l.F{
+						l.Debug.L(l.F{
 							"message":        "UPDATEDOMAINSETTINGS",
 							"LE certificate": value.LEDomain,
 							"CGP domain":     c,
