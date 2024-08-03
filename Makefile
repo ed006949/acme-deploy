@@ -1,11 +1,9 @@
 DATE		=	`date`
 GIT_STATUS	=	`git status --short`
 
-all:	commit build commit
-#all:	commit clean init update test build commit
+all:	commit build status
 
 build:
-#	go build -ldflags="-s -w" -trimpath -o "./bin/" ./...
 	go build -ldflags="-s -w" -trimpath -o "./bin/${NAME}" ./src/*.go
 	GOOS=freebsd GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o "./bin/${NAME}-freebsd-amd64" ./src/*.go
 
