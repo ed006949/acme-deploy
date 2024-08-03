@@ -7,6 +7,7 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
@@ -15,137 +16,146 @@ import (
 	"acme-deploy/src/l"
 )
 
-func (receiver *GitDB) MustLoad(path string, auth transport.AuthMethod, signKey *openpgp.Entity) {
-	var (
-		r = mustPlainOpen(path)
-	)
-	*receiver = GitDB{
-		Path:       path,
-		Repository: r,
-		Worktree:   mustWorktree(r),
-		PullOptions: &git.PullOptions{
-			Auth:     auth,
-			Progress: os.Stderr, // FIXME why so quiet?
-		},
-		CommitOptions: &git.CommitOptions{
-			All:               true,
-			AllowEmptyCommits: false,
-			Committer: func() (outbound *object.Signature) {
-				switch {
-				case signKey != nil:
-					// use first available identity as a committer
-					for _, b := range signKey.Identities {
-						outbound = &object.Signature{
-							Name:  b.UserId.Name,
-							Email: b.UserId.Email,
-							When:  time.Now(), // wtf????
-						}
-						break
+func (r *GitDB) Load(path string, auth transport.AuthMethod, signKey *openpgp.Entity) (err error) {
+	r.Path = path
+
+	switch r.Repository, err = git.PlainOpen(path); {
+	case err != nil:
+		return
+	}
+	switch r.Worktree, err = r.Repository.Worktree(); {
+	case err != nil:
+		return
+	}
+
+	r.PullOptions = &git.PullOptions{
+		Auth:     auth,
+		Progress: os.Stderr, // FIXME why so quiet?
+	}
+	r.CommitOptions = &git.CommitOptions{
+		All:               true,
+		AllowEmptyCommits: false,
+		Committer: func() (outbound *object.Signature) {
+			switch {
+			case signKey != nil:
+				for _, b := range signKey.Identities { // use first available identity as a committer
+					outbound = &object.Signature{
+						Name:  b.UserId.Name,
+						Email: b.UserId.Email,
+						When:  time.Now(), // wtf????
 					}
+					break
 				}
-				return
-			}(),
-			SignKey: signKey,
-			Signer:  nil,
-			Amend:   false,
-		},
-		PushOptions: &git.PushOptions{
-			Auth:     auth,
-			Progress: os.Stderr, // FIXME why so quiet?
-			Atomic:   true,
-		},
+			}
+			return
+		}(),
+		SignKey: signKey,
+		Signer:  nil,
+		Amend:   false,
 	}
+	r.PushOptions = &git.PushOptions{
+		Auth:     auth,
+		Progress: os.Stderr, // FIXME why so quiet?
+		Atomic:   true,
+	}
+	return
 }
 
-func (receiver *GitDB) MustCommit(msg string) {
+func (r *GitDB) Commit(msg string) (err error) {
+	var (
+		gitStatus    git.Status
+		plumbingHash plumbing.Hash
+	)
 
-	l.Informational(l.Z{"repo": receiver.Path, "action": "pull&commit"})
-
-	switch {
-	case mustIsClean(receiver.Worktree):
+	switch gitStatus, err = r.Worktree.Status(); {
+	case err != nil:
+		return
+	case gitStatus.IsClean():
 		return
 	}
 
-	l.Informational(l.Z{"repo": receiver.Path, "status": mustStatus(receiver.Worktree).String()})
-
-	l.Informational(l.Z{"repo": receiver.Path, "action": "pull"})
-	mustPull(receiver.Worktree, receiver.PullOptions)
-
-	switch {
-	case mustIsClean(receiver.Worktree):
+	switch err = r.Worktree.Pull(r.PullOptions); {
+	case errors.Is(err, git.NoErrAlreadyUpToDate):
+	case err != nil:
 		return
 	}
 
-	l.Informational(l.Z{"repo": receiver.Path, "status": mustStatus(receiver.Worktree).String()})
+	switch gitStatus, err = r.Worktree.Status(); {
+	case err != nil:
+		return
+	case gitStatus.IsClean():
+		return
+	}
 
-	l.Informational(l.Z{"repo": receiver.Path, "action": "add"})
-	mustAdd(receiver.Worktree, ".")
-	l.Informational(l.Z{"repo": receiver.Path, "action": "commit"})
-	mustCommit(receiver.Worktree, msg, receiver.CommitOptions)
-	l.Informational(l.Z{"repo": receiver.Path, "action": "push"})
-	mustPush(receiver.Repository, receiver.PushOptions)
+	switch plumbingHash, err = r.Worktree.Add("."); {
+	case err != nil:
+		return
+	}
+	l.Z{"repo": r.Path, "plumbingHash": plumbingHash.String()}.Informational()
 
-	l.Informational(l.Z{"repo": receiver.Path, "status": mustStatus(receiver.Worktree).String()})
+	switch {
+	case r.CommitOptions != nil && r.CommitOptions.Committer != nil:
+		r.CommitOptions.Committer.When = time.Now() // and again, wtf????
+	}
+
+	switch plumbingHash, err = r.Worktree.Commit(msg, r.CommitOptions); {
+	case err != nil:
+		return
+	}
+	l.Z{"repo": r.Path, "plumbingHash": plumbingHash.String()}.Informational()
+
+	switch err = r.Repository.Push(r.PushOptions); {
+	case errors.Is(err, git.NoErrAlreadyUpToDate):
+	case err != nil:
+		return
+	}
+
+	switch gitStatus, err = r.Worktree.Status(); {
+	case err != nil:
+		return
+	case gitStatus.IsClean():
+		return
+	}
+
+	return
 }
 
-func (receiver *AuthDB) WriteSSH(name string, user string, pemBytes []byte, password string) error {
-	switch _, ok := (*receiver)[name]; {
+func (r *AuthDB) WriteSSH(name string, user string, pemBytes []byte, password string) (err error) {
+	switch _, ok := (*r)[name]; {
 	case ok:
 		return l.EDUPDATA
 	}
 
-	switch outbound, err := ssh.NewPublicKeys(user, pemBytes, password); {
+	var (
+		sshPublicKeys *ssh.PublicKeys
+	)
+	switch sshPublicKeys, err = ssh.NewPublicKeys(user, pemBytes, password); {
 	case err != nil:
-		return err
+		return
 	default:
-		(*receiver)[name] = outbound
-		return nil
-	}
-}
-func (receiver *AuthDB) MustWriteSSH(name string, user string, pemBytes []byte, password string) {
-	switch err := receiver.WriteSSH(name, user, pemBytes, password); {
-	case errors.Is(err, l.EDUPDATA):
-		l.Warning(l.Z{"": err, "ssh key": name})
-	case err != nil:
-		l.Critical(l.Z{"": err, "ssh key": name})
+		(*r)[name] = sshPublicKeys
+		return
 	}
 }
 
-func (receiver *AuthDB) WriteToken(name string, user string, tokenBytes []byte) error {
-	switch _, ok := (*receiver)[name]; {
+func (r *AuthDB) WriteToken(name string, user string, tokenBytes []byte) (err error) {
+	switch _, ok := (*r)[name]; {
 	case ok:
 		return l.EDUPDATA
 	}
 
-	(*receiver)[name] = &http.BasicAuth{
+	(*r)[name] = &http.BasicAuth{
 		Username: user,
 		Password: string(tokenBytes),
 	}
-	return nil
-}
-func (receiver *AuthDB) MustWriteToken(name string, user string, tokenBytes []byte) {
-	switch err := receiver.WriteToken(name, user, tokenBytes); {
-	case errors.Is(err, l.EDUPDATA):
-		l.Warning(l.Z{"": err, "token": name})
-	case err != nil:
-		l.Critical(l.Z{"": err, "token": name})
-	}
+	return
 }
 
-func (receiver *AuthDB) ReadAuth(name string) (transport.AuthMethod, error) {
-	switch value, ok := (*receiver)[name]; {
+func (r *AuthDB) ReadAuth(name string) (outbound transport.AuthMethod, err error) {
+	switch value, ok := (*r)[name]; {
 	case !ok:
 		return nil, l.ENOTFOUND
 	default:
 		return value, nil
-	}
-}
-func (receiver *AuthDB) MustReadAuth(name string) transport.AuthMethod {
-	switch value, err := receiver.ReadAuth(name); {
-	case err != nil:
-		l.Critical(l.Z{"": err, "auth": name})
-		return nil
-	default:
-		return value
 	}
 }

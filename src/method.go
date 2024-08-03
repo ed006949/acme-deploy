@@ -23,7 +23,7 @@ import (
 	"acme-deploy/src/l"
 )
 
-func (receiver *leConf) load(vfsDB *io_vfs.VFSDB, name string) (err error) {
+func (r *leConf) load(vfsDB *io_vfs.VFSDB, name string) (err error) {
 	var (
 		data []byte
 	)
@@ -35,31 +35,31 @@ func (receiver *leConf) load(vfsDB *io_vfs.VFSDB, name string) (err error) {
 
 	data = bytes.ReplaceAll(data, []byte("/var/etc/acme-client/"), []byte(vfsDB.List["acme-client"]+"/"))
 
-	switch err = ini.MapTo(receiver, data); {
+	switch err = ini.MapTo(r, data); {
 	case err != nil:
 		return
-	case len(receiver.LEDomain) == 0 ||
-		len(receiver.LERealCertPath) == 0 ||
-		len(receiver.LERealCACertPath) == 0 ||
-		len(receiver.LERealKeyPath) == 0 ||
-		len(receiver.LERealFullChainPath) == 0:
+	case len(r.LEDomain) == 0 ||
+		len(r.LERealCertPath) == 0 ||
+		len(r.LERealCACertPath) == 0 ||
+		len(r.LERealKeyPath) == 0 ||
+		len(r.LERealFullChainPath) == 0:
 		return l.ENEDATA
 	}
 
-	switch receiver.Certificate, err = vfsDB.LoadX509KeyPair(
-		receiver.LERealFullChainPath,
-		receiver.LERealKeyPath,
+	switch r.Certificate, err = vfsDB.LoadX509KeyPair(
+		r.LERealFullChainPath,
+		r.LERealKeyPath,
 	); {
 	case err != nil:
 		return
 	}
 
-	receiver.LEAlt = l.FilterSlice(receiver.LEAlt, "no") // OPNSense and acme.sh, alt domain name = "no" ????
+	r.LEAlt = l.FilterSlice(r.LEAlt, "no") // OPNSense and acme.sh, alt domain name = "no" ????
 
 	return
 }
 
-func (receiver *xmlConf) load() (err error) {
+func (r *xmlConf) load() (err error) {
 	var (
 		vfsDB = &io_vfs.VFSDB{
 			List: make(map[string]string),
@@ -88,7 +88,7 @@ func (receiver *xmlConf) load() (err error) {
 
 	flag.Parse()
 
-	receiver.LEConfMap = make(map[string]*leConf)
+	r.LEConfMap = make(map[string]*leConf)
 
 	switch {
 	case len(flag.Args()) == 5: // acme.sh deploy
@@ -103,12 +103,12 @@ func (receiver *xmlConf) load() (err error) {
 			args = append(args, name)
 		}
 
-		receiver.Daemon = &xmlConfDaemon{
+		r.Daemon = &xmlConfDaemon{
 			Name:      _c_deploy,
 			Verbosity: l.Verbosity.String(),
 			DryRun:    l.DryRun.Value(),
 		}
-		receiver.ACMEClients = []*xmlConfACMEClients{
+		r.ACMEClients = []*xmlConfACMEClients{
 			{
 				Name: _c_deploy,
 				Path: "",
@@ -124,7 +124,7 @@ func (receiver *xmlConf) load() (err error) {
 					},
 				},
 			}}
-		receiver.CGPs = []*xmlConfCGPs{{Token: &io_cgp.Token{Name: _c_deploy}}}
+		r.CGPs = []*xmlConfCGPs{{Token: &io_cgp.Token{Name: _c_deploy}}}
 
 		for _, name := range args[1:] {
 			switch err = vfsDB.CopyFromFS2VFS(name); {
@@ -133,25 +133,25 @@ func (receiver *xmlConf) load() (err error) {
 			}
 		}
 
-		switch receiver.CGPs[0].URL, err = l.UrlParse(*cliCGP); {
+		switch r.CGPs[0].URL, err = l.UrlParse(*cliCGP); {
 		case err != nil:
 			return
 		}
 
-		switch receiver.ACMEClients[0].LEConf[args[0]].Certificate, err = vfsDB.LoadX509KeyPair(args[4], args[1]); {
+		switch r.ACMEClients[0].LEConf[args[0]].Certificate, err = vfsDB.LoadX509KeyPair(args[4], args[1]); {
 		case err != nil:
 			return
 		}
 
-		receiver.ACMEClients[0].LEConf[args[0]].LEAlt = l.FilterSlice(
-			receiver.ACMEClients[0].LEConf[args[0]].Certificate.Certificates[0].DNSNames,
-			receiver.ACMEClients[0].LEConf[args[0]].LEDomain,
+		r.ACMEClients[0].LEConf[args[0]].LEAlt = l.FilterSlice(
+			r.ACMEClients[0].LEConf[args[0]].Certificate.Certificates[0].DNSNames,
+			r.ACMEClients[0].LEConf[args[0]].LEDomain,
 		)
 
-		l.Informational(l.Z{"message": _c_deploy, "CGP": receiver.CGPs[0].URL.Redacted()})
-		l.Informational(l.Z{"message": _c_deploy, "LEDomain": receiver.ACMEClients[0].LEConf[args[0]].LEDomain})
-		l.Informational(l.Z{"message": _c_deploy, "LEAlt": receiver.ACMEClients[0].LEConf[args[0]].LEAlt})
-		l.Informational(l.Z{"message": _c_deploy, "CN": receiver.ACMEClients[0].LEConf[args[0]].Certificate.Certificates[0].Subject.CommonName})
+		l.Z{l.M: _c_deploy, "CGP": r.CGPs[0].URL.Redacted()}.Informational()
+		l.Z{l.M: _c_deploy, "LEDomain": r.ACMEClients[0].LEConf[args[0]].LEDomain}.Informational()
+		l.Z{l.M: _c_deploy, "LEAlt": r.ACMEClients[0].LEConf[args[0]].LEAlt}.Informational()
+		l.Z{l.M: _c_deploy, "CN": r.ACMEClients[0].LEConf[args[0]].Certificate.Certificates[0].Subject.CommonName}.Informational()
 
 	case len(*cliConfig) != 0: // CLI
 		switch {
@@ -181,14 +181,14 @@ func (receiver *xmlConf) load() (err error) {
 		case err != nil:
 			return
 		}
-		switch err = xml.Unmarshal(data, receiver); {
+		switch err = xml.Unmarshal(data, r); {
 		case err != nil:
 			return
 		}
 
-		_ = l.Verbosity.SetString(receiver.Daemon.Verbosity)
-		l.DryRun.Set(receiver.Daemon.DryRun)
-		l.Name.Set(receiver.Daemon.Name)
+		_ = l.Verbosity.SetString(r.Daemon.Verbosity)
+		l.DryRun.Set(r.Daemon.DryRun)
+		l.Name.Set(r.Daemon.Name)
 		switch {
 		case l.FlagIsFlagExist(l.Verbosity.Name()):
 			_ = l.Verbosity.SetString(*cliVerbosity)
@@ -199,7 +199,7 @@ func (receiver *xmlConf) load() (err error) {
 		default:
 		}
 
-		for _, b := range receiver.ACMEClients {
+		for _, b := range r.ACMEClients {
 			vfsDB.List[b.Name] = b.Path
 			b.LEConf = make(map[string]*leConf)
 		}
@@ -209,7 +209,7 @@ func (receiver *xmlConf) load() (err error) {
 		}
 
 		// find acme.sh LE config files
-		for _, b := range receiver.ACMEClients {
+		for _, b := range r.ACMEClients {
 			for _, d := range vfsDB.List {
 				var (
 					findLEConf = func(name string, dirEntry fs.DirEntry, err error) (fnErr error) {
@@ -231,11 +231,11 @@ func (receiver *xmlConf) load() (err error) {
 
 								switch err = interimLEConf.load(vfsDB, name); {
 								case errors.Is(err, l.ENODATA):
-									l.Debug(l.Z{"": err, "file": name})
+									l.Z{l.E: err, "file": name}.Debug()
 								case errors.Is(err, l.ENEDATA):
-									l.Debug(l.Z{"": err, "file": name})
+									l.Z{l.E: err, "file": name}.Debug()
 								case err != nil:
-									l.Warning(l.Z{"": err, "file": name})
+									l.Z{l.E: err, "file": name}.Warning()
 								default:
 									b.LEConf[interimLEConf.LEDomain] = interimLEConf
 								}
@@ -258,7 +258,7 @@ func (receiver *xmlConf) load() (err error) {
 		return l.ENOCONF
 	}
 
-	for _, b := range receiver.CGPs {
+	for _, b := range r.CGPs {
 		b.Domains = make(map[string][]string)
 		switch {
 		case b.Token.URL == nil:
@@ -282,21 +282,21 @@ func (receiver *xmlConf) load() (err error) {
 		b.Token.URL.Path = filepath.Join(b.Token.URL.Path) + "/" // CGP needs path separator at the end of the path
 	}
 
-	for _, b := range receiver.ACMEClients {
+	for _, b := range r.ACMEClients {
 		for _, d := range b.LEConf {
 			for _, f := range append(d.LEAlt, d.LEDomain) {
-				switch value, ok := receiver.LEConfMap[f]; {
+				switch value, ok := r.LEConfMap[f]; {
 				case ok:
-					l.Warning(l.Z{"": l.EDUPDATA, "LE certificate": value.LEDomain})
+					l.Z{l.E: l.EDUPDATA, "LE certificate": value.LEDomain}.Warning()
 					continue
 				}
-				receiver.LEConfMap[f] = d
+				r.LEConfMap[f] = d
 			}
 		}
 	}
 
 	switch {
-	case len(receiver.LEConfMap) == 0:
+	case len(r.LEConfMap) == 0:
 		return l.ENEDATA
 	}
 

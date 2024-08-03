@@ -6,18 +6,18 @@ import (
 	"acme-deploy/src/l"
 )
 
-func (receiver *SignDB) MustWriteSign(name string, data []byte, passphrase []byte) {
-	switch _, ok := (*receiver)[name]; {
+func (r *SignDB) MustWriteSign(name string, data []byte, passphrase []byte) {
+	switch _, ok := (*r)[name]; {
 	case ok:
-		l.Critical(l.Z{"": l.EDUPDATA, "sign": name})
+		l.Z{l.E: l.EDUPDATA, "sign": name}.Critical()
 		return
 	}
-	(*receiver)[name] = mustGetEntity(data, passphrase)
+	(*r)[name] = mustGetEntity(data, passphrase)
 }
-func (receiver *SignDB) MustReadSign(name string) *openpgp.Entity {
-	switch value, ok := (*receiver)[name]; {
+func (r *SignDB) MustReadSign(name string) *openpgp.Entity {
+	switch value, ok := (*r)[name]; {
 	case !ok:
-		l.Critical(l.Z{"": l.ENOTFOUND, "sign": name})
+		l.Z{l.E: l.ENOTFOUND, "sign": name}.Critical()
 		return nil
 	default:
 		return value

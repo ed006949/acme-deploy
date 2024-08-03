@@ -4,17 +4,36 @@ import (
 	"strconv"
 
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
-func (receiver Z) MarshalZerologObject(e *zerolog.Event) {
-	for a, b := range receiver {
+func (r Z) Emergency()     { log.Fatal().EmbedObject(r).Send() }
+func (r Z) Alert()         { log.Fatal().EmbedObject(r).Send() }
+func (r Z) Critical()      { log.Fatal().EmbedObject(r).Send() }
+func (r Z) Error()         { log.Error().EmbedObject(r).Send() }
+func (r Z) Warning()       { log.Warn().EmbedObject(r).Send() }
+func (r Z) Notice()        { log.Info().EmbedObject(r).Send() }
+func (r Z) Informational() { log.Info().EmbedObject(r).Send() }
+func (r Z) Debug()         { log.Debug().EmbedObject(r).Send() }
+func (r Z) Trace()         { log.Trace().EmbedObject(r).Send() }
+func (r Z) Panic()         { log.Panic().EmbedObject(r).Send() }
+
+func (r Z) MarshalZerologObject(e *zerolog.Event) {
+	for a, b := range r {
+		switch a {
+		case E:
+			a = zerolog.ErrorFieldName
+		case M:
+			a = zerolog.MessageFieldName
+		}
+
 		switch value := b.(type) {
 		case name:
 			e.Str(value.Name(), value.Value())
 		case config:
 			e.Str(value.Name(), value.Value())
 		case dryRun:
-			// e.Bool(value.Name(), value.Value())
+			e.Bool(value.Name(), value.Value())
 		case verbosity:
 			e.Str(value.Name(), value.String())
 		case severity:
@@ -22,15 +41,11 @@ func (receiver Z) MarshalZerologObject(e *zerolog.Event) {
 		case facility:
 			e.Str(value.Name(), value.String())
 		case severityNumber:
-			e.Str(Severity.Name(), severityDescription[value])
+			e.Str(a, value.String())
 		case facilityNumber:
-			e.Str(Facility.Name(), facilityDescription[value])
+			e.Str(a, value.String())
 		case error:
-			e.AnErr("error", value)
-		case string:
-			e.Str(a, value)
-		case bool:
-			e.Bool(a, value)
+			e.AnErr(a, value)
 		default:
 			e.Interface(a, value)
 		}
@@ -41,14 +56,14 @@ func (receiver Z) MarshalZerologObject(e *zerolog.Event) {
 	}
 }
 
-func (receiver name) Set(inbound string)             { pControl.name = inbound }
-func (receiver config) Set(inbound string)           { pControl.config = inbound }
-func (receiver dryRun) Set(inbound bool)             { pControl.dryRun = inbound }
-func (receiver verbosity) Set(inbound zerolog.Level) { setVerbosity(inbound) }
-func (receiver severity) Set(inbound severityNumber) { lControl.severity = inbound }
-func (receiver facility) Set(inbound facilityNumber) { lControl.facility = inbound }
+func (r name) Set(inbound string)             { pControl.name = inbound }
+func (r config) Set(inbound string)           { pControl.config = inbound }
+func (r dryRun) Set(inbound bool)             { pControl.dryRun = inbound }
+func (r verbosity) Set(inbound zerolog.Level) { setVerbosity(inbound) }
+func (r severity) Set(inbound severityNumber) { lControl.severity = inbound }
+func (r facility) Set(inbound facilityNumber) { lControl.facility = inbound }
 
-func (receiver dryRun) SetString(inbound string) error {
+func (r dryRun) SetString(inbound string) error {
 	switch value, err := ParseBool(inbound); {
 	case err != nil:
 		return err
@@ -57,7 +72,7 @@ func (receiver dryRun) SetString(inbound string) error {
 		return nil
 	}
 }
-func (receiver verbosity) SetString(inbound string) error {
+func (r verbosity) SetString(inbound string) error {
 	switch value, err := zerolog.ParseLevel(inbound); {
 	case err != nil:
 		return err
@@ -69,23 +84,27 @@ func (receiver verbosity) SetString(inbound string) error {
 	}
 }
 
-func (receiver name) Value() string             { return pControl.name }      // Package Flag Value
-func (receiver config) Value() string           { return pControl.config }    // Package Flag Value
-func (receiver dryRun) Value() bool             { return pControl.dryRun }    // Package Flag Value
-func (receiver verbosity) Value() zerolog.Level { return pControl.verbosity } // Package Flag Value
-func (receiver severity) Value() severityNumber { return lControl.severity }  // Package Flag Value
-func (receiver facility) Value() facilityNumber { return lControl.facility }  // Package Flag Value
+func (r name) Value() string             { return pControl.name }      // Package Flag Value
+func (r config) Value() string           { return pControl.config }    // Package Flag Value
+func (r dryRun) Value() bool             { return pControl.dryRun }    // Package Flag Value
+func (r verbosity) Value() zerolog.Level { return pControl.verbosity } // Package Flag Value
+func (r severity) Value() severityNumber { return lControl.severity }  // Package Flag Value
+func (r facility) Value() facilityNumber { return lControl.facility }  // Package Flag Value
 
-func (receiver name) String() string      { return pControl.name }                          // Package Flag String Value
-func (receiver config) String() string    { return pControl.config }                        // Package Flag String Value
-func (receiver dryRun) String() string    { return strconv.FormatBool(pControl.dryRun) }    // Package Flag String Value
-func (receiver verbosity) String() string { return pControl.verbosity.String() }            // Package Flag String Value
-func (receiver severity) String() string  { return severityDescription[lControl.severity] } // Package Flag String Value
-func (receiver facility) String() string  { return facilityDescription[lControl.facility] } // Package Flag String Value
+func (r name) String() string           { return pControl.name }                          // Package Flag String Value
+func (r config) String() string         { return pControl.config }                        // Package Flag String Value
+func (r dryRun) String() string         { return strconv.FormatBool(pControl.dryRun) }    // Package Flag String Value
+func (r verbosity) String() string      { return pControl.verbosity.String() }            // Package Flag String Value
+func (r severity) String() string       { return severityDescription[lControl.severity] } // Package Flag String Value
+func (r facility) String() string       { return facilityDescription[lControl.facility] } // Package Flag String Value
+func (r controlNumber) String() string  { return controlDescription[r] }                  // String Value
+func (r severityNumber) String() string { return severityDescription[r] }                 // String Value
+func (r facilityNumber) String() string { return facilityDescription[r] }                 // String Value
 
-func (receiver name) Name() string      { return string(Name) }      // Package Flag Name
-func (receiver config) Name() string    { return string(Config) }    // Package Flag Name
-func (receiver dryRun) Name() string    { return string(DryRun) }    // Package Flag Name
-func (receiver verbosity) Name() string { return string(Verbosity) } // Package Flag Name
-func (receiver severity) Name() string  { return string(Severity) }  // Package Flag Name
-func (receiver facility) Name() string  { return string(Facility) }  // Package Flag Name
+func (r name) Name() string      { return string(Name) }      // Package Flag Name
+func (r config) Name() string    { return string(Config) }    // Package Flag Name
+func (r dryRun) Name() string    { return string(DryRun) }    // Package Flag Name
+func (r verbosity) Name() string { return string(Verbosity) } // Package Flag Name
+func (r control) Name() string   { return string(Control) }   // Package Flag Name
+func (r severity) Name() string  { return string(Severity) }  // Package Flag Name
+func (r facility) Name() string  { return string(Facility) }  // Package Flag Name

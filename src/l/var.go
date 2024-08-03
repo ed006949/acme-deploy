@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	pControl = &pControlStruct{
+	pControl = &packageStruct{
 		name:      "",
 		config:    "",
 		verbosity: zerolog.InfoLevel,
@@ -14,12 +14,20 @@ var (
 )
 
 var (
-	lControl = &lControlStruct{
+	lControl = &logStruct{
 		facility: _daemon,
 		severity: _informational,
 	}
 )
 
+var (
+	controlDescription = [...]string{
+		_name:      "name",
+		_config:    "config",
+		_dryRun:    "dry-run",
+		_verbosity: "verbosity",
+	}
+)
 var (
 	severityDescription = [...]string{
 		_emergency:     "emergency",

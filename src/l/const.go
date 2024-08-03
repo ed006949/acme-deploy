@@ -1,12 +1,25 @@
 package l
 
 const (
-	Name      name      = "name"
-	Config    config    = "config"
-	DryRun    dryRun    = "dry-run"
-	Verbosity verbosity = "verbosity"
-	Severity  severity  = "severity"
-	Facility  facility  = "facility"
+	Name      name      = "name"      // receiver hook
+	Config    config    = "config"    // receiver hook
+	DryRun    dryRun    = "dry-run"   // receiver hook
+	Verbosity verbosity = "verbosity" // receiver hook
+	Control   control   = "control"   // receiver hook
+	Severity  severity  = "severity"  // receiver hook
+	Facility  facility  = "facility"  // receiver hook
+)
+
+const (
+	E = "error"   // zerolog.ErrorFieldName hook
+	M = "message" // zerolog.MessageFieldName hook
+)
+
+const (
+	_name      controlNumber = iota //
+	_config                         //
+	_dryRun                         //
+	_verbosity                      //
 )
 
 const (
@@ -18,8 +31,8 @@ const (
 	_notice                              // rfc3164
 	_informational                       // rfc3164
 	_debug                               // rfc3164
-	_trace
-	_panic
+	_trace                               // lang specific
+	_panic                               // lang specific
 )
 
 const (

@@ -12,11 +12,11 @@ import (
 	"acme-deploy/src/l"
 )
 
-func (receiver *Token) command(payload string) (outbound []string, err error) {
+func (r *Token) command(payload string) (outbound []string, err error) {
 	var (
 		request  *http.Request
 		response *http.Response
-		interim  = *receiver.URL
+		interim  = *r.URL
 		delim    = regexp.MustCompile(`[,\(\)]`)
 		buffer   = new(bytes.Buffer)
 	)
@@ -28,7 +28,7 @@ func (receiver *Token) command(payload string) (outbound []string, err error) {
 		return nil, err
 	}
 
-	// request.SetBasicAuth(receiver.Username, receiver.Password)
+	// request.SetBasicAuth(r.Username, r.Password)
 
 	switch response, err = http.DefaultClient.Do(request); {
 	case err != nil:
@@ -38,10 +38,7 @@ func (receiver *Token) command(payload string) (outbound []string, err error) {
 
 	switch {
 	case response.StatusCode != 200:
-		l.Error(l.Z{
-			"":        l.EINVALRESPONSE,
-			"message": response.Body,
-		}) //
+		l.Z{l.E: l.EINVALRESPONSE, l.M: response.Body}.Error()
 		return nil, l.EINVALRESPONSE
 	}
 
@@ -64,7 +61,7 @@ func (receiver *Token) command(payload string) (outbound []string, err error) {
 }
 
 // Command will execute only first command found
-func (receiver *Token) Command(inbound *Command) (outbound []string, err error) {
+func (r *Token) Command(inbound *Command) (outbound []string, err error) {
 	var (
 		payload       string
 		emptyResponse bool // check if response must be empty
@@ -88,7 +85,7 @@ func (receiver *Token) Command(inbound *Command) (outbound []string, err error) 
 
 				switch {
 				case l.DryRun.Value():
-					l.Debug(l.Z{"CGP server": receiver.Name, "payload len": len(payload)})
+					l.Z{"CGP server": r.Name, "payload len": len(payload)}.Debug()
 					payload = ""
 				}
 
@@ -113,8 +110,8 @@ func (receiver *Token) Command(inbound *Command) (outbound []string, err error) 
 			return nil, EComSet
 		}
 
-		l.Debug(l.Z{"CGP": receiver.Name, "payload": payload})
-		switch outbound, err = receiver.command(payload); {
+		l.Z{"CGP": r.Name, "payload": payload}.Debug()
+		switch outbound, err = r.command(payload); {
 		case err != nil:
 			return
 		case emptyResponse && outbound != nil:
@@ -129,10 +126,10 @@ func (receiver *Token) Command(inbound *Command) (outbound []string, err error) 
 
 }
 
-func (receiver *Command_Dictionary) compile() (outbound string) {
+func (r *Command_Dictionary) compile() (outbound string) {
 	outbound += "{"
 	outbound += " "
-	for a, b := range structs.Map(receiver) {
+	for a, b := range structs.Map(r) {
 		outbound += a
 		switch {
 		case len(b.(string)) > 0:
@@ -154,27 +151,27 @@ func (receiver *Command_Dictionary) compile() (outbound string) {
 	return
 }
 
-func (receiver *UPDATEDOMAINSETTINGS) compile() (outbound string) {
+func (r *UPDATEDOMAINSETTINGS) compile() (outbound string) {
 	outbound += "UPDATEDOMAINSETTINGS"
 	outbound += " "
-	outbound += receiver.DomainName
+	outbound += r.DomainName
 	outbound += " "
-	outbound += receiver.NewSettings.compile()
+	outbound += r.NewSettings.compile()
 	return
 }
 
-func (receiver *GETDOMAINALIASES) compile() (outbound string) {
+func (r *GETDOMAINALIASES) compile() (outbound string) {
 	outbound += "GETDOMAINALIASES"
 	outbound += " "
-	outbound += receiver.DomainName
+	outbound += r.DomainName
 	return
 }
 
-func (receiver *MAINDOMAINNAME) compile() (outbound string) {
+func (r *MAINDOMAINNAME) compile() (outbound string) {
 	outbound += "MAINDOMAINNAME"
 	return
 }
-func (receiver *LISTDOMAINS) compile() (outbound string) {
+func (r *LISTDOMAINS) compile() (outbound string) {
 	outbound += "LISTDOMAINS"
 	return
 }
