@@ -6,8 +6,6 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/rs/zerolog"
-
 	"acme-deploy/src/io_cgp"
 	"acme-deploy/src/io_crypto"
 	"acme-deploy/src/l"
@@ -18,14 +16,6 @@ func main() {
 		err       error
 		xmlConfig = new(xmlConf)
 	)
-
-	l.Z{
-		"version":                "1.0",
-		"title":                  "acme-deploy",
-		"license":                "Apache-2.0",
-		zerolog.MessageFieldName: "mEssAgE",
-		zerolog.ErrorFieldName:   l.EINVAL,
-	}.Informational()
 
 	switch err = xmlConfig.load(); {
 	case errors.Is(err, l.ENOCONF):
@@ -38,9 +28,7 @@ func main() {
 
 	for _, b := range xmlConfig.CGPs {
 		var (
-			listDomains          []string
-			getDomainAliases     []string
-			updateDomainSettings []string
+			listDomains []string
 		)
 
 		l.Z{l.M: "LISTDOMAINS", "CGP server": b.Token.Name}.Debug()
@@ -58,6 +46,9 @@ func main() {
 		l.Z{l.M: "LISTDOMAINS OK", "CGP server": b.Token.Name, "result": len(listDomains)}.Informational()
 
 		for _, d := range listDomains {
+			var (
+				getDomainAliases []string
+			)
 			l.Z{l.M: "GETDOMAINALIASES", "CGP domain": b.Token.Name}.Debug()
 			switch getDomainAliases, err = b.Token.Command(
 				&io_cgp.Command{
@@ -97,6 +88,9 @@ func main() {
 							return
 						}
 
+						var (
+							updateDomainSettings []string
+						)
 						switch updateDomainSettings, err = b.Command(
 							&io_cgp.Command{
 								Domain_Administration: &io_cgp.Domain_Administration{

@@ -9,8 +9,9 @@ func init() {
 	zerolog.CallerSkipFrameCount = zerolog.CallerSkipFrameCount + 1
 
 	// set defaults while init
-	Name.Set(pControl.name)
-	Config.Set(pControl.config)
+	// Name.Set(pControl.name)
+	// Config.Set(pControl.config)
 	Verbosity.Set(pControl.verbosity)
 	DryRun.Set(pControl.dryRun)
+	// Mode.Set(pControl.mode)
 }

@@ -36,6 +36,8 @@ func (r Z) MarshalZerologObject(e *zerolog.Event) {
 			e.Bool(value.Name(), value.Value())
 		case verbosity:
 			e.Str(value.Name(), value.String())
+		case mode:
+			e.Str(value.Name(), value.String())
 		case error:
 			e.AnErr(a, value)
 		default:
@@ -52,6 +54,7 @@ func (r name) Set(inbound string)             { pControl.name = inbound }
 func (r config) Set(inbound string)           { pControl.config = inbound }
 func (r dryRun) Set(inbound bool)             { pControl.dryRun = inbound }
 func (r verbosity) Set(inbound zerolog.Level) { setVerbosity(inbound) }
+func (r mode) Set(inbound string)             { setMode(inbound) }
 
 func (r dryRun) SetString(inbound string) error {
 	switch value, err := ParseBool(inbound); {
@@ -78,13 +81,16 @@ func (r name) Value() string             { return pControl.name }      // Packag
 func (r config) Value() string           { return pControl.config }    // Package Flag Value
 func (r dryRun) Value() bool             { return pControl.dryRun }    // Package Flag Value
 func (r verbosity) Value() zerolog.Level { return pControl.verbosity } // Package Flag Value
+func (r mode) Value() string             { return pControl.mode }      // Package Flag Value
 
 func (r name) String() string      { return pControl.name }                       // Package Flag String Value
 func (r config) String() string    { return pControl.config }                     // Package Flag String Value
 func (r dryRun) String() string    { return strconv.FormatBool(pControl.dryRun) } // Package Flag String Value
 func (r verbosity) String() string { return pControl.verbosity.String() }         // Package Flag String Value
+func (r mode) String() string      { return pControl.mode }                       // Package Flag String Value
 
 func (r name) Name() string      { return string(Name) }      // Package Flag Name
 func (r config) Name() string    { return string(Config) }    // Package Flag Name
 func (r dryRun) Name() string    { return string(DryRun) }    // Package Flag Name
 func (r verbosity) Name() string { return string(Verbosity) } // Package Flag Name
+func (r mode) Name() string      { return string(Mode) }      // Package Flag Name

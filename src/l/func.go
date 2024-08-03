@@ -34,6 +34,11 @@ func setVerbosity(inbound zerolog.Level) {
 	})
 }
 
+func setMode(inbound string) {
+	pControl.mode = inbound
+	Z{M: "change mode", "mode": Mode.String()}.Notice()
+}
+
 func ParseBool(inbound string) (bool, error) {
 	switch strings.ToLower(inbound) {
 	case "1", "t", "y", "true", "yes", "on":

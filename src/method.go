@@ -91,7 +91,9 @@ func (r *xmlConf) load() (err error) {
 	r.LEConfMap = make(map[string]*leConf)
 
 	switch {
-	case len(flag.Args()) == 5: // _acmeDeploy
+	case len(flag.Args()) == 5:
+		l.Mode.Set(_acmeDeploy)
+
 		var (
 			args = flag.Args()[:1]
 		)
@@ -157,7 +159,9 @@ func (r *xmlConf) load() (err error) {
 		l.Z{l.M: _acmeDeploy, "LEAlt": r.ACMEClients[0].LEConf[args[0]].LEAlt}.Informational()
 		l.Z{l.M: _acmeDeploy, "CN": r.ACMEClients[0].LEConf[args[0]].Certificate.Certificates[0].Subject.CommonName}.Informational()
 
-	case len(*cliConfig) != 0: // _acmeCLI
+	case len(*cliConfig) != 0: //
+		l.Mode.Set(_acmeCLI)
+
 		switch {
 		case l.FlagIsFlagExist(l.Verbosity.Name()):
 			_ = l.Verbosity.SetString(*cliVerbosity)

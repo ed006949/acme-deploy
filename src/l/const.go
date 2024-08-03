@@ -5,6 +5,7 @@ const (
 	Config    config    = "config"    // receiver hook
 	DryRun    dryRun    = "dry-run"   // receiver hook
 	Verbosity verbosity = "verbosity" // receiver hook
+	Mode      mode      = "mode"      // receiver hook
 )
 
 const (
