@@ -16,5 +16,3 @@ GITIGNORE_URL	:=	https://www.toptal.com/developers/gitignore/api/go,linux,macos,
 #
 #
 #
-execute:
-	./bin/${NAME} ${COMMAND_LINE}
