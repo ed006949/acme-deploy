@@ -5,44 +5,46 @@ const (
 	Config    config    = "config"
 	DryRun    dryRun    = "dry-run"
 	Verbosity verbosity = "verbosity"
+	Severity  severity  = "severity"
+	Facility  facility  = "facility"
 )
 
 const (
-	Panic         severity = iota - 1
-	Emergency              // rfc3164
-	Alert                  // rfc3164
-	Critical               // rfc3164
-	Error                  // rfc3164
-	Warning                // rfc3164
-	Notice                 // rfc3164
-	Informational          // rfc3164
-	Debug                  // rfc3164
-	Trace
+	_emergency     severityNumber = iota // rfc3164
+	_alert                               // rfc3164
+	_critical                            // rfc3164
+	_error                               // rfc3164
+	_warning                             // rfc3164
+	_notice                              // rfc3164
+	_informational                       // rfc3164
+	_debug                               // rfc3164
+	_trace
+	_panic
 )
 
-// const (
-// 	Kern         facility = iota // rfc3164
-// 	User                         // rfc3164
-// 	Mail                         // rfc3164
-// 	Daemon                       // rfc3164
-// 	Auth                         // rfc3164
-// 	Syslog                       // rfc3164
-// 	LPR                          // rfc3164
-// 	News                         // rfc3164
-// 	UUCP                         // rfc3164
-// 	Cron                         // rfc3164
-// 	Authpriv                     // rfc3164
-// 	FTP                          // rfc3164
-// 	NTP                          // rfc3164
-// 	Security                     // rfc3164
-// 	Console                      // rfc3164
-// 	Solaris_cron                 // rfc3164
-// 	Local0                       // rfc3164
-// 	Local1                       // rfc3164
-// 	Local2                       // rfc3164
-// 	Local3                       // rfc3164
-// 	Local4                       // rfc3164
-// 	Local5                       // rfc3164
-// 	Local6                       // rfc3164
-// 	Local7                       // rfc3164
-// )
+const (
+	_kern         facilityNumber = iota // rfc3164
+	_user                               // rfc3164
+	_mail                               // rfc3164
+	_daemon                             // rfc3164
+	_auth                               // rfc3164
+	_syslog                             // rfc3164
+	_lpr                                // rfc3164
+	_news                               // rfc3164
+	_uucp                               // rfc3164
+	_cron                               // rfc3164
+	_authpriv                           // rfc3164
+	_ftp                                // rfc3164
+	_ntp                                // rfc3164
+	_security                           // rfc3164
+	_console                            // rfc3164
+	_solaris_cron                       // rfc3164
+	_local0                             // rfc3164
+	_local1                             // rfc3164
+	_local2                             // rfc3164
+	_local3                             // rfc3164
+	_local4                             // rfc3164
+	_local5                             // rfc3164
+	_local6                             // rfc3164
+	_local7                             // rfc3164
+)

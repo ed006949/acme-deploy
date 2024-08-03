@@ -9,6 +9,6 @@ import (
 func MustUnmarshal(data []byte, v interface{}) {
 	switch err := xml.Unmarshal(data, &v); {
 	case err != nil:
-		l.Critical.E(err, nil)
+		l.Critical(l.Z{"": err})
 	}
 }

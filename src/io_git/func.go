@@ -13,7 +13,7 @@ import (
 func mustPlainOpen(path string) *git.Repository {
 	switch outbound, err := git.PlainOpen(path); {
 	case err != nil:
-		l.Critical.E(err, l.F{"name": path})
+		l.Critical(l.Z{"": err, "name": path})
 		return nil
 	default:
 		return outbound
@@ -22,7 +22,7 @@ func mustPlainOpen(path string) *git.Repository {
 func mustWorktree(r *git.Repository) *git.Worktree {
 	switch outbound, err := r.Worktree(); {
 	case err != nil:
-		l.Critical.E(err, nil)
+		l.Critical(l.Z{"": err})
 		return nil
 	default:
 		return outbound
@@ -31,7 +31,7 @@ func mustWorktree(r *git.Repository) *git.Worktree {
 func mustGetConfig(r *git.Repository) *config.Config {
 	switch outbound, err := r.Config(); {
 	case err != nil:
-		l.Critical.E(err, nil)
+		l.Critical(l.Z{"": err})
 		return nil
 	default:
 		return outbound
@@ -40,7 +40,7 @@ func mustGetConfig(r *git.Repository) *config.Config {
 func mustSetConfig(r *git.Repository, c *config.Config) {
 	switch err := r.SetConfig(c); {
 	case err != nil:
-		l.Critical.E(err, nil)
+		l.Critical(l.Z{"": err})
 	}
 }
 
@@ -48,14 +48,14 @@ func mustPull(w *git.Worktree, o *git.PullOptions) {
 	switch err := w.Pull(o); {
 	case errors.Is(err, git.NoErrAlreadyUpToDate):
 	case err != nil:
-		l.Critical.E(err, nil)
+		l.Critical(l.Z{"": err})
 	}
 }
 
 func mustAdd(w *git.Worktree, path string) {
 	switch _, err := w.Add(path); {
 	case err != nil:
-		l.Critical.E(err, l.F{"name": path})
+		l.Critical(l.Z{"": err, "name": path})
 	}
 }
 func mustCommit(w *git.Worktree, msg string, opts *git.CommitOptions) {
@@ -66,20 +66,20 @@ func mustCommit(w *git.Worktree, msg string, opts *git.CommitOptions) {
 
 	switch _, err := w.Commit(msg, opts); {
 	case err != nil:
-		l.Critical.E(err, l.F{"commit message": msg})
+		l.Critical(l.Z{"": err, "commit message": msg})
 	}
 }
 func mustPush(r *git.Repository, o *git.PushOptions) {
 	switch err := r.Push(o); {
 	case errors.Is(err, git.NoErrAlreadyUpToDate):
 	case err != nil:
-		l.Critical.E(err, nil)
+		l.Critical(l.Z{"": err})
 	}
 }
 func mustStatus(w *git.Worktree) git.Status {
 	switch value, err := w.Status(); {
 	case err != nil:
-		l.Critical.E(err, nil)
+		l.Critical(l.Z{"": err})
 		return nil
 	default:
 		return value

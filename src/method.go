@@ -148,10 +148,10 @@ func (receiver *xmlConf) load() (err error) {
 			receiver.ACMEClients[0].LEConf[args[0]].LEDomain,
 		)
 
-		l.Informational.L(l.F{"message": _c_deploy, "CGP": receiver.CGPs[0].URL.Redacted()})
-		l.Informational.L(l.F{"message": _c_deploy, "LEDomain": receiver.ACMEClients[0].LEConf[args[0]].LEDomain})
-		l.Informational.L(l.F{"message": _c_deploy, "LEAlt": receiver.ACMEClients[0].LEConf[args[0]].LEAlt})
-		l.Informational.L(l.F{"message": _c_deploy, "CN": receiver.ACMEClients[0].LEConf[args[0]].Certificate.Certificates[0].Subject.CommonName})
+		l.Informational(l.Z{"message": _c_deploy, "CGP": receiver.CGPs[0].URL.Redacted()})
+		l.Informational(l.Z{"message": _c_deploy, "LEDomain": receiver.ACMEClients[0].LEConf[args[0]].LEDomain})
+		l.Informational(l.Z{"message": _c_deploy, "LEAlt": receiver.ACMEClients[0].LEConf[args[0]].LEAlt})
+		l.Informational(l.Z{"message": _c_deploy, "CN": receiver.ACMEClients[0].LEConf[args[0]].Certificate.Certificates[0].Subject.CommonName})
 
 	case len(*cliConfig) != 0: // CLI
 		switch {
@@ -231,11 +231,11 @@ func (receiver *xmlConf) load() (err error) {
 
 								switch err = interimLEConf.load(vfsDB, name); {
 								case errors.Is(err, l.ENODATA):
-									l.Debug.E(err, l.F{"file": name})
+									l.Debug(l.Z{"": err, "file": name})
 								case errors.Is(err, l.ENEDATA):
-									l.Debug.E(err, l.F{"file": name})
+									l.Debug(l.Z{"": err, "file": name})
 								case err != nil:
-									l.Warning.E(err, l.F{"file": name})
+									l.Warning(l.Z{"": err, "file": name})
 								default:
 									b.LEConf[interimLEConf.LEDomain] = interimLEConf
 								}
@@ -287,7 +287,7 @@ func (receiver *xmlConf) load() (err error) {
 			for _, f := range append(d.LEAlt, d.LEDomain) {
 				switch value, ok := receiver.LEConfMap[f]; {
 				case ok:
-					l.Warning.E(l.EDUPDATA, l.F{"LE certificate": value.LEDomain})
+					l.Warning(l.Z{"": l.EDUPDATA, "LE certificate": value.LEDomain})
 					continue
 				}
 				receiver.LEConfMap[f] = d

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -13,46 +12,16 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (receiver name) Set(inbound string)             { pControl.name = inbound }
-func (receiver config) Set(inbound string)           { pControl.config = inbound }
-func (receiver dryRun) Set(inbound bool)             { pControl.dryRun = inbound }
-func (receiver verbosity) Set(inbound zerolog.Level) { setVerbosity(inbound) }
-
-func (receiver dryRun) SetString(inbound string) error {
-	switch value, err := ParseBool(inbound); {
-	case err != nil:
-		return err
-	default:
-		pControl.dryRun = value
-		return nil
-	}
-}
-func (receiver verbosity) SetString(inbound string) error {
-	switch value, err := zerolog.ParseLevel(inbound); {
-	case err != nil:
-		return err
-	case len(inbound) == 0 || value == zerolog.NoLevel:
-		return EINVAL
-	default:
-		setVerbosity(value)
-		return nil
-	}
-}
-
-func (receiver name) Value() string             { return pControl.name }      // Package Flag Value
-func (receiver config) Value() string           { return pControl.config }    // Package Flag Value
-func (receiver dryRun) Value() bool             { return pControl.dryRun }    // Package Flag Value
-func (receiver verbosity) Value() zerolog.Level { return pControl.verbosity } // Package Flag Value
-
-func (receiver name) String() string      { return pControl.name }                       // Package Flag String Value
-func (receiver config) String() string    { return pControl.config }                     // Package Flag String Value
-func (receiver dryRun) String() string    { return strconv.FormatBool(pControl.dryRun) } // Package Flag String Value
-func (receiver verbosity) String() string { return pControl.verbosity.String() }         // Package Flag String Value
-
-func (receiver name) Name() string      { return string(Name) }      // Package Flag Name
-func (receiver config) Name() string    { return string(Config) }    // Package Flag Name
-func (receiver dryRun) Name() string    { return string(DryRun) }    // Package Flag Name
-func (receiver verbosity) Name() string { return string(Verbosity) } // Package Flag Name
+func Emergency(e Z)     { log.Fatal().EmbedObject(e).Send() }
+func Alert(e Z)         { log.Fatal().EmbedObject(e).Send() }
+func Critical(e Z)      { log.Fatal().EmbedObject(e).Send() }
+func Error(e Z)         { log.Error().EmbedObject(e).Send() }
+func Warning(e Z)       { log.Warn().EmbedObject(e).Send() }
+func Notice(e Z)        { log.Info().EmbedObject(e).Send() }
+func Informational(e Z) { log.Info().EmbedObject(e).Send() }
+func Debug(e Z)         { log.Debug().EmbedObject(e).Send() }
+func Trace(e Z)         { log.Trace().EmbedObject(e).Send() }
+func Panic(e Z)         { log.Panic().EmbedObject(e).Send() }
 
 func setVerbosity(inbound zerolog.Level) {
 	pControl.verbosity = inbound

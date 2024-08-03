@@ -19,7 +19,7 @@ func LookupMX(names []string) (outbound []string) {
 		case errDetail != nil && errDetail.IsNotFound:
 			continue
 		case err != nil:
-			l.Warning.E(err, l.F{"name": name})
+			l.Warning(l.Z{"": err, "name": name})
 			continue
 		}
 		for _, b := range interim {

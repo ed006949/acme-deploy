@@ -38,8 +38,9 @@ func (receiver *Token) command(payload string) (outbound []string, err error) {
 
 	switch {
 	case response.StatusCode != 200:
-		l.Error.E(l.EINVALRESPONSE, l.F{ //
-			"message": response.Body, //
+		l.Error(l.Z{
+			"":        l.EINVALRESPONSE,
+			"message": response.Body,
 		}) //
 		return nil, l.EINVALRESPONSE
 	}
@@ -87,7 +88,7 @@ func (receiver *Token) Command(inbound *Command) (outbound []string, err error) 
 
 				switch {
 				case l.DryRun.Value():
-					l.Debug.L(l.F{"CGP server": receiver.Name, "payload len": len(payload)})
+					l.Debug(l.Z{"CGP server": receiver.Name, "payload len": len(payload)})
 					payload = ""
 				}
 
@@ -112,7 +113,7 @@ func (receiver *Token) Command(inbound *Command) (outbound []string, err error) 
 			return nil, EComSet
 		}
 
-		l.Debug.L(l.F{"CGP": receiver.Name, "payload": payload})
+		l.Debug(l.Z{"CGP": receiver.Name, "payload": payload})
 		switch outbound, err = receiver.command(payload); {
 		case err != nil:
 			return

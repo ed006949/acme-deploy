@@ -58,7 +58,7 @@ type Certificate struct {
 func MustX509KeyPair(certPEMBlock []byte, keyPEMBlock []byte) (outbound *Certificate) {
 	switch cert, err := X509KeyPair(certPEMBlock, keyPEMBlock); {
 	case err != nil:
-		l.Critical.E(err, nil)
+		l.Critical(l.Z{"": err})
 		return nil
 	default:
 		return cert

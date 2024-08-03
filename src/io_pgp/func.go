@@ -14,7 +14,7 @@ import (
 func mustArmorDecode(in io.Reader) *armor.Block {
 	switch outbound, err := armor.Decode(in); {
 	case err != nil:
-		l.Critical.E(err, nil)
+		l.Critical(l.Z{"": err})
 		return nil
 	default:
 		return outbound
@@ -23,7 +23,7 @@ func mustArmorDecode(in io.Reader) *armor.Block {
 func mustReadEntity(block *armor.Block) *openpgp.Entity {
 	switch outbound, err := openpgp.ReadEntity(packet.NewReader(block.Body)); {
 	case err != nil:
-		l.Critical.E(err, nil)
+		l.Critical(l.Z{"": err})
 		return nil
 	default:
 		return outbound
@@ -32,7 +32,7 @@ func mustReadEntity(block *armor.Block) *openpgp.Entity {
 func mustDecryptPrivateKeys(e *openpgp.Entity, passphrase []byte) {
 	switch err := e.DecryptPrivateKeys(passphrase); {
 	case err != nil:
-		l.Critical.E(err, nil)
+		l.Critical(l.Z{"": err})
 	}
 }
 func mustGetEntity(data []byte, passphrase []byte) *openpgp.Entity {

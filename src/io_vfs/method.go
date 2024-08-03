@@ -18,7 +18,7 @@ import (
 func (receiver *VFSDB) MustReadlink(name string) string {
 	switch outbound, err := receiver.VFS.Readlink(name); {
 	case err != nil:
-		l.Critical.E(err, nil /* l.F{"name": name} */)
+		l.Critical(l.Z{"": err})
 		return ""
 	default:
 		return outbound
@@ -28,7 +28,7 @@ func (receiver *VFSDB) MustReadlink(name string) string {
 func (receiver *VFSDB) MustReadFile(name string) []byte {
 	switch outbound, err := receiver.VFS.ReadFile(name); {
 	case err != nil:
-		l.Critical.E(err, l.F{"name": name})
+		l.Critical(l.Z{"": err, "name": name})
 		return nil
 	default:
 		return outbound
@@ -38,7 +38,7 @@ func (receiver *VFSDB) MustReadFile(name string) []byte {
 func (receiver *VFSDB) MustWriteFile(filename string, data []byte) {
 	switch err := receiver.VFS.WriteFile(filename, data, avfs.DefaultFilePerm); {
 	case err != nil:
-		l.Critical.E(err, nil /* l.F{"name": filename} */)
+		l.Critical(l.Z{"": err})
 	}
 }
 
@@ -52,7 +52,7 @@ func (receiver *VFSDB) MustGetFullAbs(listID string, name string) string {
 	case ok:
 		return receiver.MustAbs(filepath.Join(value, name))
 	default:
-		l.Critical.E(l.ENOTFOUND, l.F{"list ID": listID})
+		l.Critical(l.Z{"": l.ENOTFOUND, "list ID": listID})
 		return ""
 	}
 }
@@ -68,20 +68,20 @@ func (receiver *VFSDB) MustLWriteFile(listID string, filename string, data []byt
 func (receiver *VFSDB) MustMkdirAll(path string) {
 	switch err := receiver.VFS.MkdirAll(path, avfs.DefaultDirPerm); {
 	case err != nil:
-		l.Critical.E(err, nil /* l.F{"name": path} */)
+		l.Critical(l.Z{"": err})
 	}
 }
 
 func (receiver *VFSDB) MustSymlink(oldname string, newname string) {
 	switch err := receiver.VFS.Symlink(oldname, newname); {
 	case err != nil:
-		l.Critical.E(err, nil /*l.F{"oldname": oldname, "newname": newname}*/)
+		l.Critical(l.Z{"": err})
 	}
 }
 func (receiver *VFSDB) MustCopyFS2VFS() {
 	switch err := receiver.CopyFS2VFS(); {
 	case err != nil:
-		l.Critical.E(err, nil)
+		l.Critical(l.Z{"": err})
 	}
 }
 
@@ -183,14 +183,14 @@ func (receiver *VFSDB) MustWriteVFS() {
 		orphanFn   = func(name string, dirEntry fs.DirEntry, err error) error {
 			switch {
 			case err != nil:
-				l.Critical.E(err, l.F{"name": name})
+				l.Critical(l.Z{"": err, "name": name})
 			}
 
 			switch orphanFileInfo, orphanErr := receiver.VFS.Lstat(name); {
 			case errors.Is(orphanErr, fs.ErrNotExist): //							not exist
 				orphanList[name] = struct{}{}
 			case orphanErr != nil: //												error
-				l.Critical.E(err, nil /* l.F{"name": name} */)
+				l.Critical(l.Z{"": err})
 
 			case dirEntry.Type() != orphanFileInfo.Mode().Type(): //				exist but different type
 				orphanList[name] = struct{}{}
@@ -210,7 +210,7 @@ func (receiver *VFSDB) MustWriteVFS() {
 	}
 
 	for a := range orphanList {
-		l.Notice.E(l.EORPHANED, l.F{"name": a})
+		l.Notice(l.Z{"": l.EORPHANED, "name": a})
 	}
 
 	// compare and sync VFS to FS
@@ -218,7 +218,7 @@ func (receiver *VFSDB) MustWriteVFS() {
 		syncFn = func(name string, dirEntry fs.DirEntry, err error) error {
 			switch {
 			case err != nil:
-				l.Critical.E(err, l.F{"name": name})
+				l.Critical(l.Z{"": err, "name": name})
 			}
 
 			switch dirEntry.Type() {
@@ -244,13 +244,13 @@ func (receiver *VFSDB) MustWriteVFS() {
 func (receiver *VFSDB) MustWalkDir(root string, fn fs.WalkDirFunc) {
 	switch err := receiver.VFS.WalkDir(root, fn); {
 	case err != nil:
-		l.Critical.E(err, l.F{"name": root})
+		l.Critical(l.Z{"": err, "name": root})
 	}
 }
 func (receiver *VFSDB) MustAbs(path string) string {
 	switch outbound, err := receiver.VFS.Abs(path); {
 	case err != nil:
-		l.Critical.E(err, nil /* l.F{"name": path} */)
+		l.Critical(l.Z{"": err})
 		return ""
 	default:
 		return outbound
@@ -260,7 +260,7 @@ func (receiver *VFSDB) MustAbs(path string) string {
 func (receiver *VFSDB) MustGlob(pattern string) []string {
 	switch outbound, err := receiver.VFS.Glob(pattern); {
 	case err != nil:
-		l.Critical.E(err, nil /* l.F{"pattern": pattern} */)
+		l.Critical(l.Z{"": err})
 		return nil
 	default:
 		return outbound

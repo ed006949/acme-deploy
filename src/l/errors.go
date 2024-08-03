@@ -1,5 +1,7 @@
 package l
 
+type errorNumber int
+
 const (
 	EORPHANED errorNumber = iota
 	EDUPDATA
@@ -25,8 +27,6 @@ var errorDescription = [...]string{
 	EUEDATA:        "unexpected data",
 	EINVALRESPONSE: "invalid response",
 }
-
-type errorNumber uint
 
 func (e errorNumber) Error() string        { return errorDescription[e] }
 func (e errorNumber) Is(target error) bool { return e == target }

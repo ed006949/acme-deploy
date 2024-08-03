@@ -59,16 +59,16 @@ func (receiver *GitDB) MustLoad(path string, auth transport.AuthMethod, signKey 
 
 func (receiver *GitDB) MustCommit(msg string) {
 
-	l.Informational.L(l.F{"repo": receiver.Path, "action": "pull&commit"})
+	l.Informational(l.Z{"repo": receiver.Path, "action": "pull&commit"})
 
 	switch {
 	case mustIsClean(receiver.Worktree):
 		return
 	}
 
-	l.Informational.L(l.F{"repo": receiver.Path, "status": mustStatus(receiver.Worktree).String()})
+	l.Informational(l.Z{"repo": receiver.Path, "status": mustStatus(receiver.Worktree).String()})
 
-	l.Informational.L(l.F{"repo": receiver.Path, "action": "pull"})
+	l.Informational(l.Z{"repo": receiver.Path, "action": "pull"})
 	mustPull(receiver.Worktree, receiver.PullOptions)
 
 	switch {
@@ -76,16 +76,16 @@ func (receiver *GitDB) MustCommit(msg string) {
 		return
 	}
 
-	l.Informational.L(l.F{"repo": receiver.Path, "status": mustStatus(receiver.Worktree).String()})
+	l.Informational(l.Z{"repo": receiver.Path, "status": mustStatus(receiver.Worktree).String()})
 
-	l.Informational.L(l.F{"repo": receiver.Path, "action": "add"})
+	l.Informational(l.Z{"repo": receiver.Path, "action": "add"})
 	mustAdd(receiver.Worktree, ".")
-	l.Informational.L(l.F{"repo": receiver.Path, "action": "commit"})
+	l.Informational(l.Z{"repo": receiver.Path, "action": "commit"})
 	mustCommit(receiver.Worktree, msg, receiver.CommitOptions)
-	l.Informational.L(l.F{"repo": receiver.Path, "action": "push"})
+	l.Informational(l.Z{"repo": receiver.Path, "action": "push"})
 	mustPush(receiver.Repository, receiver.PushOptions)
 
-	l.Informational.L(l.F{"repo": receiver.Path, "status": mustStatus(receiver.Worktree).String()})
+	l.Informational(l.Z{"repo": receiver.Path, "status": mustStatus(receiver.Worktree).String()})
 }
 
 func (receiver *AuthDB) WriteSSH(name string, user string, pemBytes []byte, password string) error {
@@ -105,9 +105,9 @@ func (receiver *AuthDB) WriteSSH(name string, user string, pemBytes []byte, pass
 func (receiver *AuthDB) MustWriteSSH(name string, user string, pemBytes []byte, password string) {
 	switch err := receiver.WriteSSH(name, user, pemBytes, password); {
 	case errors.Is(err, l.EDUPDATA):
-		l.Warning.E(err, l.F{"ssh key": name})
+		l.Warning(l.Z{"": err, "ssh key": name})
 	case err != nil:
-		l.Critical.E(err, l.F{"ssh key": name})
+		l.Critical(l.Z{"": err, "ssh key": name})
 	}
 }
 
@@ -126,9 +126,9 @@ func (receiver *AuthDB) WriteToken(name string, user string, tokenBytes []byte) 
 func (receiver *AuthDB) MustWriteToken(name string, user string, tokenBytes []byte) {
 	switch err := receiver.WriteToken(name, user, tokenBytes); {
 	case errors.Is(err, l.EDUPDATA):
-		l.Warning.E(err, l.F{"token": name})
+		l.Warning(l.Z{"": err, "token": name})
 	case err != nil:
-		l.Critical.E(err, l.F{"token": name})
+		l.Critical(l.Z{"": err, "token": name})
 	}
 }
 
@@ -143,7 +143,7 @@ func (receiver *AuthDB) ReadAuth(name string) (transport.AuthMethod, error) {
 func (receiver *AuthDB) MustReadAuth(name string) transport.AuthMethod {
 	switch value, err := receiver.ReadAuth(name); {
 	case err != nil:
-		l.Critical.E(err, l.F{"auth": name})
+		l.Critical(l.Z{"": err, "auth": name})
 		return nil
 	default:
 		return value

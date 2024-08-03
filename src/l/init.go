@@ -6,7 +6,7 @@ import (
 
 func init() {
 	// l.log function call nesting depth is 2
-	zerolog.CallerSkipFrameCount = zerolog.CallerSkipFrameCount + 2
+	zerolog.CallerSkipFrameCount = zerolog.CallerSkipFrameCount + 1
 
 	// set defaults while init
 	Name.Set(pControl.name)
