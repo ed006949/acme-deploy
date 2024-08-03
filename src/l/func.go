@@ -23,6 +23,25 @@ import (
 // func Trace(e Z)         { log.Trace().EmbedObject(e).Send() }
 // func Panic(e Z)         { log.Panic().EmbedObject(e).Send() }
 
+func setName(inbound string) {
+	switch {
+	case len(inbound) == 0:
+		return
+	}
+
+	pControl.name = inbound
+}
+func setConfig(inbound string) {
+	switch {
+	case len(inbound) == 0:
+		return
+	}
+
+	pControl.config = inbound
+}
+func setDryRun(inbound bool) {
+	pControl.dryRun = inbound
+}
 func setVerbosity(inbound zerolog.Level) {
 	pControl.verbosity = inbound
 	zerolog.SetGlobalLevel(pControl.verbosity) // how it works ....
@@ -33,10 +52,48 @@ func setVerbosity(inbound zerolog.Level) {
 		FormatFieldValue: func(i interface{}) string { return fmt.Sprintf("\"%s\"", i) },
 	})
 }
-
 func setMode(inbound string) {
+	switch {
+	case len(inbound) == 0:
+		return
+	}
+
 	pControl.mode = inbound
+
+	zerolog.CallerSkipFrameCount += 2
 	Z{M: Mode.String()}.Notice()
+	zerolog.CallerSkipFrameCount -= 2
+}
+
+func setStringDryRun(inbound string) error {
+	switch {
+	case len(inbound) == 0:
+		return ENODATA
+	}
+
+	switch value, err := ParseBool(inbound); {
+	case err != nil:
+		return err
+	default:
+		pControl.dryRun = value
+		return nil
+	}
+}
+func setStringVerbosity(inbound string) error {
+	switch {
+	case len(inbound) == 0:
+		return ENODATA
+	}
+
+	switch value, err := zerolog.ParseLevel(inbound); {
+	case err != nil:
+		return err
+	case value == zerolog.NoLevel:
+		return EINVAL
+	default:
+		setVerbosity(value)
+		return nil
+	}
 }
 
 func ParseBool(inbound string) (bool, error) {

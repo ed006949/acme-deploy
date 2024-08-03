@@ -7,17 +7,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (r Z) Emergency()     { log.Fatal().EmbedObject(r).Send() }
-func (r Z) Alert()         { log.Fatal().EmbedObject(r).Send() }
-func (r Z) Critical()      { log.Fatal().EmbedObject(r).Send() }
-func (r Z) Error()         { log.Error().EmbedObject(r).Send() }
-func (r Z) Warning()       { log.Warn().EmbedObject(r).Send() }
-func (r Z) Notice()        { log.Info().EmbedObject(r).Send() }
-func (r Z) Informational() { log.Info().EmbedObject(r).Send() }
-func (r Z) Debug()         { log.Debug().EmbedObject(r).Send() }
-func (r Z) Trace()         { log.Trace().EmbedObject(r).Send() }
-func (r Z) Panic()         { log.Panic().EmbedObject(r).Send() }
-
 func (r Z) MarshalZerologObject(e *zerolog.Event) {
 	for a, b := range r {
 		switch a {
@@ -57,32 +46,25 @@ func (r Z) MarshalZerologObject(e *zerolog.Event) {
 	}
 }
 
-func (r name) Set(inbound string)             { pControl.name = inbound }
-func (r config) Set(inbound string)           { pControl.config = inbound }
-func (r dryRun) Set(inbound bool)             { pControl.dryRun = inbound }
+func (r Z) Emergency()     { log.Fatal().EmbedObject(r).Send() }
+func (r Z) Alert()         { log.Fatal().EmbedObject(r).Send() }
+func (r Z) Critical()      { log.Fatal().EmbedObject(r).Send() }
+func (r Z) Error()         { log.Error().EmbedObject(r).Send() }
+func (r Z) Warning()       { log.Warn().EmbedObject(r).Send() }
+func (r Z) Notice()        { log.Info().EmbedObject(r).Send() }
+func (r Z) Informational() { log.Info().EmbedObject(r).Send() }
+func (r Z) Debug()         { log.Debug().EmbedObject(r).Send() }
+func (r Z) Trace()         { log.Trace().EmbedObject(r).Send() }
+func (r Z) Panic()         { log.Panic().EmbedObject(r).Send() }
+
+func (r name) Set(inbound string)             { setName(inbound) }
+func (r config) Set(inbound string)           { setConfig(inbound) }
+func (r dryRun) Set(inbound bool)             { setDryRun(inbound) }
 func (r verbosity) Set(inbound zerolog.Level) { setVerbosity(inbound) }
 func (r mode) Set(inbound string)             { setMode(inbound) }
 
-func (r dryRun) SetString(inbound string) error {
-	switch value, err := ParseBool(inbound); {
-	case err != nil:
-		return err
-	default:
-		pControl.dryRun = value
-		return nil
-	}
-}
-func (r verbosity) SetString(inbound string) error {
-	switch value, err := zerolog.ParseLevel(inbound); {
-	case err != nil:
-		return err
-	case len(inbound) == 0 || value == zerolog.NoLevel:
-		return EINVAL
-	default:
-		setVerbosity(value)
-		return nil
-	}
-}
+func (r dryRun) SetString(inbound string) error    { return setStringDryRun(inbound) }
+func (r verbosity) SetString(inbound string) error { return setStringVerbosity(inbound) }
 
 func (r name) Value() string             { return pControl.name }      // Package Flag Value
 func (r config) Value() string           { return pControl.config }    // Package Flag Value
