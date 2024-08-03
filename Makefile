@@ -65,7 +65,6 @@ update:
 
 include Makefile.local
 
-
 #
 # possibly destructive actions
 # possibly destructive actions
