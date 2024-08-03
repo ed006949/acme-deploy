@@ -4,7 +4,6 @@ import (
 	"crypto/rsa"
 	"errors"
 	"flag"
-	"fmt"
 
 	"acme-deploy/src/io_cgp"
 	"acme-deploy/src/io_crypto"
@@ -30,8 +29,6 @@ func main() {
 		var (
 			listDomains []string
 		)
-
-		l.Z{l.M: "LISTDOMAINS", "CGP server": b.Token.Name}.Debug()
 		switch listDomains, err = b.Token.Command(
 			&io_cgp.Command{
 				Domain_Set_Administration: &io_cgp.Domain_Set_Administration{
@@ -40,16 +37,13 @@ func main() {
 			},
 		); {
 		case err != nil:
-			l.Z{l.E: err, l.M: "LISTDOMAINS", "CGP server": b.Token.Name, "result": listDomains}.Error()
 			continue
 		}
-		l.Z{l.M: "LISTDOMAINS OK", "CGP server": b.Token.Name, "result": len(listDomains)}.Informational()
 
 		for _, d := range listDomains {
 			var (
 				getDomainAliases []string
 			)
-			l.Z{l.M: "GETDOMAINALIASES", "CGP domain": b.Token.Name}.Debug()
 			switch getDomainAliases, err = b.Token.Command(
 				&io_cgp.Command{
 					Domain_Administration: &io_cgp.Domain_Administration{
@@ -60,12 +54,9 @@ func main() {
 				},
 			); {
 			case err != nil:
-				l.Z{l.E: err, l.M: "GETDOMAINALIASES", "CGP domain": b.Token.Name, "result": getDomainAliases}.Error()
 				continue
 			}
-
 			b.Domains[d] = getDomainAliases
-			l.Z{l.M: "GETDOMAINALIASES OK", "CGP domain": b.Token.Name, "result": len(getDomainAliases)}.Informational()
 		}
 
 		for c, d := range b.Domains {
@@ -73,18 +64,18 @@ func main() {
 				for _, h := range append(d, c) {
 					switch value, ok := xmlConfig.LEConfMap[h]; {
 					case ok:
-						l.Z{l.M: "UPDATEDOMAINSETTINGS", "LE certificate": value.LEDomain, "CGP domain": c}.Debug()
+						l.Z{"LE certificate": value.LEDomain}.Debug()
 
 						switch privateKey := value.Certificate.PrivateKey.(type) {
 						case *rsa.PrivateKey:
 							switch privateKey.Size() {
 							case 512, 1024, 2048, 4096:
 							default:
-								l.Z{l.E: io_crypto.EPrivKeySize, l.M: "CGP supports RSA only 512, 1024, 2048 or 4096 bits", "LE certificate": value.LEDomain, "CGP domain": c, "type": fmt.Sprintf("%T", value.Certificate.PrivateKey), "size": privateKey.Size}.Warning()
+								l.Z{l.E: io_crypto.EPrivKeySize, l.M: "CGP supports RSA only 512, 1024, 2048 or 4096 bits", "LE certificate": value.LEDomain, l.T: privateKey, "size": privateKey.Size}.Warning()
 								return
 							}
 						default:
-							l.Z{l.E: io_crypto.EPrivKeyType, l.M: "CGP supports only RSA and only 512, 1024, 2048 or 4096 bits", "LE certificate": value.LEDomain, "CGP domain": c, "type": fmt.Sprintf("%T", value.Certificate.PrivateKey)}.Warning()
+							l.Z{l.E: io_crypto.EPrivKeyType, l.M: "CGP supports only RSA and only 512, 1024, 2048 or 4096 bits", "LE certificate": value.LEDomain, l.T: privateKey}.Warning()
 							return
 						}
 
@@ -107,15 +98,10 @@ func main() {
 							},
 						); {
 						case err != nil:
-							l.Z{l.E: err, l.M: "UPDATEDOMAINSETTINGS", "LE certificate": value.LEDomain, "CGP domain": c, "result": updateDomainSettings}.Error()
-							return
+							// return
 						case updateDomainSettings != nil:
-							l.Z{l.E: l.EINVALRESPONSE, l.M: "UPDATEDOMAINSETTINGS OK", "LE certificate": value.LEDomain, "CGP domain": c, "result": updateDomainSettings}.Warning()
 						default:
-							l.Z{l.M: "UPDATEDOMAINSETTINGS OK", "LE certificate": value.LEDomain, "CGP domain": c}.Informational()
 						}
-
-						return
 					}
 				}
 			}()

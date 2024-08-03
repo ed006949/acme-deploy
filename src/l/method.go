@@ -25,6 +25,8 @@ func (r Z) MarshalZerologObject(e *zerolog.Event) {
 			a = zerolog.ErrorFieldName
 		case M:
 			a = zerolog.MessageFieldName
+			// case T:
+			// 	a = zerolog.TypeFieldName
 		}
 
 		switch value := b.(type) {
@@ -41,7 +43,12 @@ func (r Z) MarshalZerologObject(e *zerolog.Event) {
 		case error:
 			e.AnErr(a, value)
 		default:
-			e.Interface(a, value)
+			switch a {
+			case T:
+				e.Type(a, b)
+			default:
+				e.Interface(a, value)
+			}
 		}
 	}
 	switch {

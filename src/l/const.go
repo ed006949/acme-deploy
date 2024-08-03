@@ -11,4 +11,5 @@ const (
 const (
 	E = "error"   // zerolog.ErrorFieldName hook
 	M = "message" // zerolog.MessageFieldName hook
+	T = "type"    // zerolog.MessageFieldName hook
 )

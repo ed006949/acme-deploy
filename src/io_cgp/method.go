@@ -63,12 +63,14 @@ func (r *Token) command(payload string) (outbound []string, err error) {
 // Command will execute only first command found
 func (r *Token) Command(inbound *Command) (outbound []string, err error) {
 	var (
+		o             = make(l.Z)
 		payload       string
 		emptyResponse bool // check if response must be empty
 	)
 
 	switch {
 	case inbound != nil:
+		o["server"] = r.Name
 		payload += "command"
 		payload += "="
 
@@ -77,15 +79,19 @@ func (r *Token) Command(inbound *Command) (outbound []string, err error) {
 
 			switch {
 			case inbound.Domain_Administration.GETDOMAINALIASES != nil:
+				o["command"] = "GETDOMAINALIASES"
+				o["domain"] = inbound.Domain_Administration.GETDOMAINALIASES.DomainName
 				payload += inbound.Domain_Administration.GETDOMAINALIASES.compile()
 
 			case inbound.Domain_Administration.UPDATEDOMAINSETTINGS != nil:
+				o["command"] = "UPDATEDOMAINSETTINGS"
+				o["domain"] = inbound.Domain_Administration.UPDATEDOMAINSETTINGS.DomainName
 				emptyResponse = true
 				payload += inbound.Domain_Administration.UPDATEDOMAINSETTINGS.compile()
 
 				switch {
 				case l.DryRun.Value():
-					l.Z{"CGP server": r.Name, "payload len": len(payload)}.Debug()
+					o["payloadLen"] = len(payload)
 					payload = ""
 				}
 
@@ -97,9 +103,11 @@ func (r *Token) Command(inbound *Command) (outbound []string, err error) {
 
 			switch {
 			case inbound.Domain_Set_Administration.MAINDOMAINNAME != nil:
+				o["command"] = "MAINDOMAINNAME"
 				payload += inbound.Domain_Set_Administration.MAINDOMAINNAME.compile()
 
 			case inbound.Domain_Set_Administration.LISTDOMAINS != nil:
+				o["command"] = "LISTDOMAINS"
 				payload += inbound.Domain_Set_Administration.LISTDOMAINS.compile()
 
 			default:
@@ -110,20 +118,26 @@ func (r *Token) Command(inbound *Command) (outbound []string, err error) {
 			return nil, EComSet
 		}
 
-		l.Z{"CGP": r.Name, "payload": payload}.Debug()
+		o[l.M] = "do"
+		o.Debug()
 		switch outbound, err = r.command(payload); {
 		case err != nil:
+			o[l.E] = err
+			o.Error()
 			return
 		case emptyResponse && outbound != nil:
+			o[l.E] = l.EINVALRESPONSE
+			o.Error()
 			return outbound, l.EINVALRESPONSE
 		default:
+			o[l.M] = "done"
+			o.Informational()
 			return
 		}
 
 	default:
 		return nil, ECom
 	}
-
 }
 
 func (r *Command_Dictionary) compile() (outbound string) {
