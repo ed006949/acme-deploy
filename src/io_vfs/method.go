@@ -25,16 +25,6 @@ func (r *VFSDB) MustReadlink(name string) string {
 	}
 }
 
-func (r *VFSDB) MustReadFile(name string) []byte {
-	switch outbound, err := r.VFS.ReadFile(name); {
-	case err != nil:
-		l.Z{l.E: err, "name": name}.Critical()
-		return nil
-	default:
-		return outbound
-	}
-}
-
 func (r *VFSDB) CopyFS2VFS() (err error) {
 	for a, b := range r.List {
 		switch r.List[a], err = filepath.Abs(b); {
@@ -126,7 +116,7 @@ func (r *VFSDB) CopyFromFS2VFS(name string) (err error) {
 	return
 }
 
-func (r *VFSDB) MustWriteVFS() (err error) {
+func (r *VFSDB) WriteVFS() (err error) {
 	// remove described-only orphaned entries from FS
 	var (
 		orphanList = make(map[string]struct{})
@@ -148,10 +138,23 @@ func (r *VFSDB) MustWriteVFS() (err error) {
 			case dirEntry.Type() != orphanFileInfo.Mode().Type(): //				exist but different type
 				orphanList[name] = struct{}{}
 
-			case dirEntry.Type() == fs.ModeSymlink &&
-				dirEntry.Type() == orphanFileInfo.Mode().Type() &&
-				io_fs.MustReadLink(name) != r.MustReadlink(name): //         check symlink match
-				orphanList[name] = struct{}{}
+			case dirEntry.Type() == fs.ModeSymlink && dirEntry.Type() == orphanFileInfo.Mode().Type(): // check symlink match
+				var (
+					linkVFS string
+					linkFS  string
+				)
+				switch linkVFS, err = r.VFS.Readlink(name); {
+				case err != nil:
+					return
+				}
+				switch linkFS, err = os.Readlink(name); {
+				case err != nil:
+					return
+				}
+				switch {
+				case linkVFS != linkFS:
+					orphanList[name] = struct{}{}
+				}
 			}
 
 			return
@@ -184,14 +187,67 @@ func (r *VFSDB) MustWriteVFS() (err error) {
 				case err != nil:
 					return
 				}
+
 			case fs.ModeSymlink:
-				io_fs.MustSymlink(r.MustReadlink(name), name)
-			case 0:
-				switch {
-				case io_fs.MustIsNotExist(name) || !bytes.Equal(io_fs.MustReadFile(name), r.MustReadFile(name)):
-					io_fs.MustWriteFile(name, r.MustReadFile(name))
+				var (
+					linkVFS string
+				)
+				switch linkVFS, err = r.VFS.Readlink(name); {
+				case err != nil:
+					return
 				}
+
+				switch err = io_fs.Symlink(linkVFS, name); {
+				case err != nil:
+					return
+				}
+
+			case 0:
+				var (
+					isExist bool
+					dataVFS []byte
+					dataFS  []byte
+				)
+				switch isExist, err = io_fs.IsExist(name); {
+				case !isExist:
+					// read file
+					switch dataVFS, err = r.VFS.ReadFile(name); {
+					case err != nil:
+						return
+					}
+					// write file
+					switch err = os.WriteFile(name, dataVFS, avfs.DefaultFilePerm); {
+					case err != nil:
+						return
+					}
+					return
+				}
+
+				// read files
+				switch dataVFS, err = r.VFS.ReadFile(name); {
+				case err != nil:
+					return
+				}
+				switch dataFS, err = os.ReadFile(name); {
+				case err != nil:
+					return
+				}
+
+				// compare files
+				switch {
+				case bytes.Equal(dataVFS, dataFS):
+					return
+				}
+
+				// write file
+				switch err = os.WriteFile(name, dataVFS, avfs.DefaultFilePerm); {
+				case err != nil:
+					return
+				}
+				return
+
 			default:
+				return
 			}
 
 			return
@@ -204,16 +260,6 @@ func (r *VFSDB) MustWriteVFS() (err error) {
 	}
 
 	return
-}
-
-func (r *VFSDB) MustAbs(path string) string {
-	switch outbound, err := r.VFS.Abs(path); {
-	case err != nil:
-		l.Z{l.E: err}.Critical()
-		return ""
-	default:
-		return outbound
-	}
 }
 
 func (r *VFSDB) CopyFileFS2VFS(name string) (err error) {
@@ -251,6 +297,7 @@ func (r *VFSDB) LoadX509KeyPair(chain string, key string) (outbound *io_crypto.C
 	}
 	return
 }
+
 func (r *VFSDB) LoadIniMapTo(v any, source string) (err error) {
 	var (
 		data []byte
