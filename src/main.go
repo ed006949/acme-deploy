@@ -116,7 +116,7 @@ func main() {
 							l.Z{l.E: err, l.M: "UPDATEDOMAINSETTINGS", "LE certificate": value.LEDomain, "CGP domain": c, "result": updateDomainSettings}.Error()
 							return
 						case updateDomainSettings != nil:
-							l.Z{l.E: l.EUEDATA, l.M: "UPDATEDOMAINSETTINGS OK", "LE certificate": value.LEDomain, "CGP domain": c, "result": updateDomainSettings}.Warning()
+							l.Z{l.E: l.EINVALRESPONSE, l.M: "UPDATEDOMAINSETTINGS OK", "LE certificate": value.LEDomain, "CGP domain": c, "result": updateDomainSettings}.Warning()
 						default:
 							l.Z{l.M: "UPDATEDOMAINSETTINGS OK", "LE certificate": value.LEDomain, "CGP domain": c}.Informational()
 						}

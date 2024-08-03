@@ -35,56 +35,6 @@ func (r *VFSDB) MustReadFile(name string) []byte {
 	}
 }
 
-func (r *VFSDB) MustWriteFile(filename string, data []byte) {
-	switch err := r.VFS.WriteFile(filename, data, avfs.DefaultFilePerm); {
-	case err != nil:
-		l.Z{l.E: err}.Critical()
-	}
-}
-
-func (r *VFSDB) MustGetFullAbs(listID string, name string) string {
-	switch {
-	case len(listID) == 0:
-		return r.MustAbs(name)
-	}
-
-	switch value, ok := r.List[listID]; {
-	case ok:
-		return r.MustAbs(filepath.Join(value, name))
-	default:
-		l.Z{l.E: l.ENOTFOUND, "list ID": listID}.Critical()
-		return ""
-	}
-}
-
-func (r *VFSDB) MustLReadFile(listID string, name string) []byte {
-	return r.MustReadFile(r.MustGetFullAbs(listID, name))
-}
-
-func (r *VFSDB) MustLWriteFile(listID string, filename string, data []byte) {
-	r.MustWriteFile(r.MustGetFullAbs(listID, filename), data)
-}
-
-func (r *VFSDB) MustMkdirAll(path string) {
-	switch err := r.VFS.MkdirAll(path, avfs.DefaultDirPerm); {
-	case err != nil:
-		l.Z{l.E: err}.Critical()
-	}
-}
-
-func (r *VFSDB) MustSymlink(oldname string, newname string) {
-	switch err := r.VFS.Symlink(oldname, newname); {
-	case err != nil:
-		l.Z{l.E: err}.Critical()
-	}
-}
-func (r *VFSDB) MustCopyFS2VFS() {
-	switch err := r.CopyFS2VFS(); {
-	case err != nil:
-		l.Z{l.E: err}.Critical()
-	}
-}
-
 func (r *VFSDB) CopyFS2VFS() (err error) {
 	for a, b := range r.List {
 		switch r.List[a], err = filepath.Abs(b); {
@@ -102,16 +52,16 @@ func (r *VFSDB) CopyFS2VFS() (err error) {
 
 func (r *VFSDB) CopyFromFS2VFS(name string) (err error) {
 	var (
-		fn = func(name string, dirEntry fs.DirEntry, err error) (fnErr error) {
+		fn = func(name string, dirEntry fs.DirEntry, fnErr error) (err error) {
 			switch {
-			case err != nil:
-				return err
+			case fnErr != nil:
+				return fnErr
 			}
 
 			switch dirEntry.Type() {
 			case fs.ModeDir:
-				switch fnErr = r.VFS.MkdirAll(name, avfs.DefaultDirPerm); {
-				case fnErr != nil:
+				switch err = r.VFS.MkdirAll(name, avfs.DefaultDirPerm); {
+				case err != nil:
 					return
 				}
 
@@ -121,38 +71,38 @@ func (r *VFSDB) CopyFromFS2VFS(name string) (err error) {
 					data   []byte
 				)
 
-				switch target, fnErr = os.Readlink(name); {
-				case fnErr != nil:
+				switch target, err = os.Readlink(name); {
+				case err != nil:
 					return
 				}
 
-				switch fnErr = r.VFS.Symlink(target, name); {
-				case fnErr != nil:
+				switch err = r.VFS.Symlink(target, name); {
+				case err != nil:
 					return
 				}
 
 				// FIXME implement fs.DirEntry Type() check in case of symlink->symlink / symlink->dir, etc ....
-				switch fnErr = r.VFS.MkdirAll(io_fs.Dir(target), avfs.DefaultDirPerm); {
-				case fnErr != nil:
+				switch err = r.VFS.MkdirAll(io_fs.Dir(target), avfs.DefaultDirPerm); {
+				case err != nil:
 					return
 				}
 
-				switch data, fnErr = os.ReadFile(name); {
-				case fnErr != nil:
+				switch data, err = os.ReadFile(name); {
+				case err != nil:
 					return
 				}
-				switch fnErr = r.VFS.WriteFile(target, data, avfs.DefaultFilePerm); {
-				case fnErr != nil:
+				switch err = r.VFS.WriteFile(target, data, avfs.DefaultFilePerm); {
+				case err != nil:
 					return
 				}
 
 			case 0:
-				switch fnErr = r.VFS.MkdirAll(io_fs.Dir(name), avfs.DefaultDirPerm); {
-				case fnErr != nil:
+				switch err = r.VFS.MkdirAll(io_fs.Dir(name), avfs.DefaultDirPerm); {
+				case err != nil:
 					return
 				}
-				switch fnErr = r.CopyFileFS2VFS(name); {
-				case fnErr != nil:
+				switch err = r.CopyFileFS2VFS(name); {
+				case err != nil:
 					return
 				}
 
@@ -176,21 +126,24 @@ func (r *VFSDB) CopyFromFS2VFS(name string) (err error) {
 	return
 }
 
-func (r *VFSDB) MustWriteVFS() {
+func (r *VFSDB) MustWriteVFS() (err error) {
 	// remove described-only orphaned entries from FS
 	var (
 		orphanList = make(map[string]struct{})
-		orphanFn   = func(name string, dirEntry fs.DirEntry, err error) error {
+		orphanFn   = func(name string, dirEntry fs.DirEntry, fnErr error) (err error) {
 			switch {
-			case err != nil:
-				l.Z{l.E: err, "name": name}.Critical()
+			case fnErr != nil:
+				return fnErr
 			}
 
-			switch orphanFileInfo, orphanErr := r.VFS.Lstat(name); {
-			case errors.Is(orphanErr, fs.ErrNotExist): //							not exist
+			var (
+				orphanFileInfo fs.FileInfo
+			)
+			switch orphanFileInfo, err = r.VFS.Lstat(name); {
+			case errors.Is(err, fs.ErrNotExist): //							not exist
 				orphanList[name] = struct{}{}
-			case orphanErr != nil: //												error
-				l.Z{l.E: err}.Critical()
+			case err != nil: //												error
+				return err
 
 			case dirEntry.Type() != orphanFileInfo.Mode().Type(): //				exist but different type
 				orphanList[name] = struct{}{}
@@ -201,12 +154,15 @@ func (r *VFSDB) MustWriteVFS() {
 				orphanList[name] = struct{}{}
 			}
 
-			return nil
+			return
 		}
 	)
 
 	for _, b := range r.List {
-		r.MustWalkDir(b, orphanFn)
+		switch err = r.VFS.WalkDir(b, orphanFn); {
+		case err != nil:
+			return
+		}
 	}
 
 	for a := range orphanList {
@@ -215,15 +171,19 @@ func (r *VFSDB) MustWriteVFS() {
 
 	// compare and sync VFS to FS
 	var (
-		syncFn = func(name string, dirEntry fs.DirEntry, err error) error {
+		syncFn = func(name string, dirEntry fs.DirEntry, fnErr error) (err error) {
 			switch {
-			case err != nil:
-				l.Z{l.E: err, "name": name}.Critical()
+			case fnErr != nil:
+				return fnErr
 			}
 
 			switch dirEntry.Type() {
 			case fs.ModeDir:
-				io_fs.MustMkdir(name)
+				switch err = os.Mkdir(name, avfs.DefaultDirPerm); {
+				case errors.Is(err, fs.ErrExist):
+				case err != nil:
+					return
+				}
 			case fs.ModeSymlink:
 				io_fs.MustSymlink(r.MustReadlink(name), name)
 			case 0:
@@ -234,19 +194,18 @@ func (r *VFSDB) MustWriteVFS() {
 			default:
 			}
 
-			return nil
+			return
 		}
 	)
 
-	r.MustWalkDir("/", syncFn)
+	switch err = r.VFS.WalkDir("/", syncFn); {
+	case err != nil:
+		return
+	}
+
+	return
 }
 
-func (r *VFSDB) MustWalkDir(root string, fn fs.WalkDirFunc) {
-	switch err := r.VFS.WalkDir(root, fn); {
-	case err != nil:
-		l.Z{l.E: err, "name": root}.Critical()
-	}
-}
 func (r *VFSDB) MustAbs(path string) string {
 	switch outbound, err := r.VFS.Abs(path); {
 	case err != nil:
@@ -255,19 +214,6 @@ func (r *VFSDB) MustAbs(path string) string {
 	default:
 		return outbound
 	}
-}
-
-func (r *VFSDB) MustGlob(pattern string) []string {
-	switch outbound, err := r.VFS.Glob(pattern); {
-	case err != nil:
-		l.Z{l.E: err}.Critical()
-		return nil
-	default:
-		return outbound
-	}
-}
-func (r *VFSDB) MustLGlob(listID string, pattern string) []string {
-	return r.MustGlob(r.MustGetFullAbs(listID, pattern))
 }
 
 func (r *VFSDB) CopyFileFS2VFS(name string) (err error) {

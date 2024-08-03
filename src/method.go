@@ -104,13 +104,13 @@ func (r *xmlConf) load() (err error) {
 		}
 
 		r.Daemon = &xmlConfDaemon{
-			Name:      _c_deploy,
+			Name:      _acmeDeploy,
 			Verbosity: l.Verbosity.String(),
 			DryRun:    l.DryRun.Value(),
 		}
 		r.ACMEClients = []*xmlConfACMEClients{
 			{
-				Name: _c_deploy,
+				Name: _acmeDeploy,
 				Path: "",
 				LEConf: map[string]*leConf{
 					args[0]: {
@@ -124,7 +124,7 @@ func (r *xmlConf) load() (err error) {
 					},
 				},
 			}}
-		r.CGPs = []*xmlConfCGPs{{Token: &io_cgp.Token{Name: _c_deploy}}}
+		r.CGPs = []*xmlConfCGPs{{Token: &io_cgp.Token{Name: _acmeDeploy}}}
 
 		for _, name := range args[1:] {
 			switch err = vfsDB.CopyFromFS2VFS(name); {
@@ -148,10 +148,10 @@ func (r *xmlConf) load() (err error) {
 			r.ACMEClients[0].LEConf[args[0]].LEDomain,
 		)
 
-		l.Z{l.M: _c_deploy, "CGP": r.CGPs[0].URL.Redacted()}.Informational()
-		l.Z{l.M: _c_deploy, "LEDomain": r.ACMEClients[0].LEConf[args[0]].LEDomain}.Informational()
-		l.Z{l.M: _c_deploy, "LEAlt": r.ACMEClients[0].LEConf[args[0]].LEAlt}.Informational()
-		l.Z{l.M: _c_deploy, "CN": r.ACMEClients[0].LEConf[args[0]].Certificate.Certificates[0].Subject.CommonName}.Informational()
+		l.Z{l.M: _acmeDeploy, "CGP": r.CGPs[0].URL.Redacted()}.Informational()
+		l.Z{l.M: _acmeDeploy, "LEDomain": r.ACMEClients[0].LEConf[args[0]].LEDomain}.Informational()
+		l.Z{l.M: _acmeDeploy, "LEAlt": r.ACMEClients[0].LEConf[args[0]].LEAlt}.Informational()
+		l.Z{l.M: _acmeDeploy, "CN": r.ACMEClients[0].LEConf[args[0]].Certificate.Certificates[0].Subject.CommonName}.Informational()
 
 	case len(*cliConfig) != 0: // CLI
 		switch {
