@@ -31,12 +31,15 @@ func (r *VFSDB) CopyFS2VFS() (err error) {
 		case err != nil:
 			return
 		}
+	}
 
-		switch err = r.CopyFromFS2VFS(r.List[a]); {
+	for _, b := range r.List {
+		switch err = r.CopyFromFS2VFS(b); {
 		case err != nil:
 			return
 		}
 	}
+
 	return
 }
 
@@ -306,7 +309,7 @@ func (r *VFSDB) LoadIniMapTo(v any, source string) (err error) {
 	case err != nil:
 		return
 	}
-	return ini.MapTo(&v, data)
+	return ini.MapTo(&v, &data)
 
 	// var (
 	// 	dataSet []any

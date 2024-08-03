@@ -91,7 +91,7 @@ func (r *xmlConf) load() (err error) {
 	r.LEConfMap = make(map[string]*leConf)
 
 	switch {
-	case len(flag.Args()) == 5: // acme.sh deploy
+	case len(flag.Args()) == 5: // _acmeDeploy
 		var (
 			args = flag.Args()[:1]
 		)
@@ -124,18 +124,22 @@ func (r *xmlConf) load() (err error) {
 					},
 				},
 			}}
-		r.CGPs = []*xmlConfCGPs{{Token: &io_cgp.Token{Name: _acmeDeploy}}}
+		r.CGPs = []*xmlConfCGPs{{
+			Token: &io_cgp.Token{
+				Name: _acmeDeploy,
+			},
+		}}
+
+		switch r.CGPs[0].URL, err = l.UrlParse(*cliCGP); {
+		case err != nil:
+			return
+		}
 
 		for _, name := range args[1:] {
 			switch err = vfsDB.CopyFromFS2VFS(name); {
 			case err != nil:
 				return
 			}
-		}
-
-		switch r.CGPs[0].URL, err = l.UrlParse(*cliCGP); {
-		case err != nil:
-			return
 		}
 
 		switch r.ACMEClients[0].LEConf[args[0]].Certificate, err = vfsDB.LoadX509KeyPair(args[4], args[1]); {
@@ -153,7 +157,7 @@ func (r *xmlConf) load() (err error) {
 		l.Z{l.M: _acmeDeploy, "LEAlt": r.ACMEClients[0].LEConf[args[0]].LEAlt}.Informational()
 		l.Z{l.M: _acmeDeploy, "CN": r.ACMEClients[0].LEConf[args[0]].Certificate.Certificates[0].Subject.CommonName}.Informational()
 
-	case len(*cliConfig) != 0: // CLI
+	case len(*cliConfig) != 0: // _acmeCLI
 		switch {
 		case l.FlagIsFlagExist(l.Verbosity.Name()):
 			_ = l.Verbosity.SetString(*cliVerbosity)
@@ -212,10 +216,10 @@ func (r *xmlConf) load() (err error) {
 		for _, b := range r.ACMEClients {
 			for _, d := range vfsDB.List {
 				var (
-					findLEConf = func(name string, dirEntry fs.DirEntry, err error) (fnErr error) {
+					findLEConf = func(name string, dirEntry fs.DirEntry, fnErr error) (err error) {
 						switch {
-						case err != nil:
-							return err
+						case fnErr != nil:
+							return fnErr
 						}
 
 						switch dirEntry.Type() {
@@ -231,14 +235,15 @@ func (r *xmlConf) load() (err error) {
 
 								switch err = interimLEConf.load(vfsDB, name); {
 								case errors.Is(err, l.ENODATA):
-									l.Z{l.E: err, "file": name}.Debug()
+									return nil
 								case errors.Is(err, l.ENEDATA):
-									l.Z{l.E: err, "file": name}.Debug()
+									return nil
 								case err != nil:
-									l.Z{l.E: err, "file": name}.Warning()
-								default:
-									b.LEConf[interimLEConf.LEDomain] = interimLEConf
+									return
 								}
+
+								b.LEConf[interimLEConf.LEDomain] = interimLEConf
+
 							}
 						default:
 						}
