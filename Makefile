@@ -1,7 +1,9 @@
 DATE		=	`date`
 GIT_STATUS	=	`git status --short`
 
-all:	commit build status
+all:	commit
+all:	build
+all:	status
 
 build:
 	go build -ldflags="-s -w" -trimpath -o "./bin/${NAME}" ./src/*.go
