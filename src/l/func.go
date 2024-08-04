@@ -41,10 +41,17 @@ func setConfig(inbound string) {
 }
 func setDryRun(inbound bool) {
 	pControl.dryRun = inbound
+
+	switch {
+	case DryRun.Value():
+		zerolog.CallerSkipFrameCount += 2
+		Z{DryRun.Name(): DryRun.Value()}.Notice()
+		zerolog.CallerSkipFrameCount -= 2
+	}
 }
 func setVerbosity(inbound zerolog.Level) {
 	pControl.verbosity = inbound
-	zerolog.SetGlobalLevel(pControl.verbosity) // how it works ....
+	zerolog.SetGlobalLevel(pControl.verbosity) // .!. how it works ....
 	log.Logger = log.Level(pControl.verbosity).With().Timestamp().Caller().Logger().Output(zerolog.ConsoleWriter{
 		Out:              os.Stderr,
 		NoColor:          false,
@@ -61,7 +68,7 @@ func setMode(inbound string) {
 	pControl.mode = inbound
 
 	zerolog.CallerSkipFrameCount += 2
-	Z{M: Mode.String()}.Notice()
+	Z{Mode.Name(): Mode.Value()}.Notice()
 	zerolog.CallerSkipFrameCount -= 2
 }
 
@@ -75,7 +82,9 @@ func setStringDryRun(inbound string) error {
 	case err != nil:
 		return err
 	default:
-		pControl.dryRun = value
+		zerolog.CallerSkipFrameCount += 2
+		DryRun.Set(value)
+		zerolog.CallerSkipFrameCount += 2
 		return nil
 	}
 }
@@ -88,10 +97,10 @@ func setStringVerbosity(inbound string) error {
 	switch value, err := zerolog.ParseLevel(inbound); {
 	case err != nil:
 		return err
-	case value == zerolog.NoLevel:
-		return EINVAL
 	default:
-		setVerbosity(value)
+		zerolog.CallerSkipFrameCount += 2
+		Verbosity.Set(value)
+		zerolog.CallerSkipFrameCount -= 2
 		return nil
 	}
 }
@@ -104,6 +113,14 @@ func ParseBool(inbound string) (bool, error) {
 		return false, nil
 	default:
 		return false, EINVAL
+	}
+}
+func FormatBool(inbound bool) string {
+	switch inbound {
+	case true:
+		return "true"
+	default:
+		return "false"
 	}
 }
 

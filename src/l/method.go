@@ -1,8 +1,6 @@
 package l
 
 import (
-	"strconv"
-
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -72,11 +70,11 @@ func (r dryRun) Value() bool             { return pControl.dryRun }    // Packag
 func (r verbosity) Value() zerolog.Level { return pControl.verbosity } // Package Flag Value
 func (r mode) Value() string             { return pControl.mode }      // Package Flag Value
 
-func (r name) String() string      { return pControl.name }                       // Package Flag String Value
-func (r config) String() string    { return pControl.config }                     // Package Flag String Value
-func (r dryRun) String() string    { return strconv.FormatBool(pControl.dryRun) } // Package Flag String Value
-func (r verbosity) String() string { return pControl.verbosity.String() }         // Package Flag String Value
-func (r mode) String() string      { return pControl.mode }                       // Package Flag String Value
+func (r name) String() string      { return r.Value() }                   // Package Flag String Value
+func (r config) String() string    { return r.Value() }                   // Package Flag String Value
+func (r dryRun) String() string    { return FormatBool(r.Value()) }       // Package Flag String Value
+func (r verbosity) String() string { return pControl.verbosity.String() } // Package Flag String Value
+func (r mode) String() string      { return r.Value() }                   // Package Flag String Value
 
 func (r name) Name() string      { return string(Name) }      // Package Flag Name
 func (r config) Name() string    { return string(Config) }    // Package Flag Name

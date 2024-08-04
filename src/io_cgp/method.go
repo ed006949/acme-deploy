@@ -127,7 +127,7 @@ func (r *Token) Command(inbound *Command) (outbound []string, err error) {
 			return
 		case emptyResponse && outbound != nil:
 			o[l.E] = l.EINVALRESPONSE
-			o.Error()
+			o.Warning()
 			return outbound, l.EINVALRESPONSE
 		default:
 			o[l.M] = "done"

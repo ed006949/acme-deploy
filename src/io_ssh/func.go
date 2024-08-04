@@ -4,7 +4,6 @@ package io_ssh
 // 	"crypto"
 // 	"encoding/base64"
 // 	"encoding/pem"
-// 	"fmt"
 //
 // 	"golang.org/x/crypto/ed25519"
 // 	"golang.org/x/crypto/ssh"
@@ -26,6 +25,6 @@ package io_ssh
 // 		panic(err)
 // 	}
 // 	publicKeyString := "ssh-ed25519" + " " + base64.StdEncoding.EncodeToString(publicKey.Marshal()) + " " + ""
-// 	fmt.Printf("Private Key:\n%s\n", privateKeyString)
-// 	fmt.Printf("Public Key:\n%s\n", publicKeyString)
+// 	Printf("Private Key:\n%s\n", privateKeyString)
+// 	Printf("Public Key:\n%s\n", publicKeyString)
 // }
