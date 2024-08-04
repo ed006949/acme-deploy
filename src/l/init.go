@@ -5,10 +5,10 @@ import (
 )
 
 func init() {
-	// l.log function call nesting depth is 2
+	// l.log function call nesting depth is 1
 	zerolog.CallerSkipFrameCount = zerolog.CallerSkipFrameCount + 1
 
-	// set defaults while init
+	// parse defaults while init
 	Name.Set(pControl.name)
 	Config.Set(pControl.config)
 	Verbosity.Set(pControl.verbosity)

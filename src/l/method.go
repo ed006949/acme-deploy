@@ -44,16 +44,16 @@ func (r Z) MarshalZerologObject(e *zerolog.Event) {
 	}
 }
 
-func (r Z) Emergency()     { log.Fatal().EmbedObject(r).Send() }
-func (r Z) Alert()         { log.Fatal().EmbedObject(r).Send() }
-func (r Z) Critical()      { log.Fatal().EmbedObject(r).Send() }
-func (r Z) Error()         { log.Error().EmbedObject(r).Send() }
-func (r Z) Warning()       { log.Warn().EmbedObject(r).Send() }
-func (r Z) Notice()        { log.Info().EmbedObject(r).Send() }
-func (r Z) Informational() { log.Info().EmbedObject(r).Send() }
-func (r Z) Debug()         { log.Debug().EmbedObject(r).Send() }
-func (r Z) Trace()         { log.Trace().EmbedObject(r).Send() }
-func (r Z) Panic()         { log.Panic().EmbedObject(r).Send() }
+func (r Z) Emergency()     { log.Fatal().EmbedObject(r).Send() } // rfc3164 ----
+func (r Z) Alert()         { log.Fatal().EmbedObject(r).Send() } // rfc3164 ----
+func (r Z) Critical()      { log.Fatal().EmbedObject(r).Send() } // rfc3164 ----
+func (r Z) Error()         { log.Error().EmbedObject(r).Send() } // rfc3164 +
+func (r Z) Warning()       { log.Warn().EmbedObject(r).Send() }  // rfc3164 +
+func (r Z) Notice()        { log.Info().EmbedObject(r).Send() }  // rfc3164 ----
+func (r Z) Informational() { log.Info().EmbedObject(r).Send() }  // rfc3164 +
+func (r Z) Debug()         { log.Debug().EmbedObject(r).Send() } // rfc3164 +
+func (r Z) Trace()         { log.Trace().EmbedObject(r).Send() } // specific +
+func (r Z) Panic()         { log.Panic().EmbedObject(r).Send() } // specific +
 
 func (r name) Set(inbound string)             { setName(inbound) }
 func (r config) Set(inbound string)           { setConfig(inbound) }
