@@ -45,7 +45,7 @@ func setDryRun(inbound bool) {
 	switch {
 	case DryRun.Value():
 		zerolog.CallerSkipFrameCount += 2
-		Z{DryRun.Name(): DryRun.Value()}.Notice()
+		Z{}.Notice()
 		zerolog.CallerSkipFrameCount -= 2
 	}
 }
@@ -68,7 +68,7 @@ func setMode(inbound string) {
 	pControl.mode = inbound
 
 	zerolog.CallerSkipFrameCount += 2
-	Z{Mode.Name(): Mode.Value()}.Notice()
+	Z{M: Mode.Value()}.Notice()
 	zerolog.CallerSkipFrameCount -= 2
 }
 
