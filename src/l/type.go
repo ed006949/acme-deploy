@@ -6,16 +6,22 @@ import (
 
 type Z map[string]interface{}
 
-type name string
-type config string
-type dryRun string
-type verbosity string
-type mode string
+type nameType string
+type configType string
+type dryRunType string
+type verbosityType string
+type modeType string
 
-type pStruct struct {
-	name      string
-	config    string
-	dryRun    bool
-	verbosity zerolog.Level
-	mode      string
+type nameValue string
+type configValue string
+type dryRunFlag bool
+type modeValue int
+type verbosityLevel zerolog.Level
+
+type controlStruct struct {
+	name      nameValue
+	config    configValue
+	dryRun    dryRunFlag
+	mode      modeValue
+	verbosity verbosityLevel
 }

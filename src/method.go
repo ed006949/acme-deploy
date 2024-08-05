@@ -92,7 +92,7 @@ func (r *xmlConf) load() (err error) {
 
 	switch {
 	case len(flag.Args()) == 5:
-		l.Mode.Set(_acmeDeploy)
+		l.Deploy.Set()
 
 		var (
 			args = flag.Args()[:1]
@@ -106,13 +106,13 @@ func (r *xmlConf) load() (err error) {
 		}
 
 		r.Daemon = &xmlConfDaemon{
-			Name:      _acmeDeploy,
+			Name:      l.Mode.String(),
 			Verbosity: l.Verbosity.String(),
-			DryRun:    l.DryRun.Value(),
+			DryRun:    l.DryRun.Flag(),
 		}
 		r.ACMEClients = []*xmlConfACMEClients{
 			{
-				Name: _acmeDeploy,
+				Name: l.Mode.String(),
 				Path: "",
 				LEConf: map[string]*leConf{
 					args[0]: {
@@ -128,7 +128,7 @@ func (r *xmlConf) load() (err error) {
 			}}
 		r.CGPs = []*xmlConfCGPs{{
 			Token: &io_cgp.Token{
-				Name: _acmeDeploy,
+				Name: l.Mode.String(),
 			},
 		}}
 
@@ -138,7 +138,7 @@ func (r *xmlConf) load() (err error) {
 		}
 
 		for _, name := range args[1:] {
-			switch err = vfsDB.CopyFromFS2VFS(name); {
+			switch err = vfsDB.CopyFromFS(name); {
 			case err != nil:
 				return
 			}
@@ -154,20 +154,20 @@ func (r *xmlConf) load() (err error) {
 			r.ACMEClients[0].LEConf[args[0]].LEDomain,
 		)
 
-		l.Z{l.M: _acmeDeploy, "CGP": r.CGPs[0].URL.Redacted()}.Informational()
-		l.Z{l.M: _acmeDeploy, "LEDomain": r.ACMEClients[0].LEConf[args[0]].LEDomain}.Informational()
-		l.Z{l.M: _acmeDeploy, "LEAlt": r.ACMEClients[0].LEConf[args[0]].LEAlt}.Informational()
-		l.Z{l.M: _acmeDeploy, "CN": r.ACMEClients[0].LEConf[args[0]].Certificate.Certificates[0].Subject.CommonName}.Informational()
+		l.Z{l.M: l.Mode.String(), "CGP": r.CGPs[0].URL.Redacted()}.Informational()
+		l.Z{l.M: l.Mode.String(), "LEDomain": r.ACMEClients[0].LEConf[args[0]].LEDomain}.Informational()
+		l.Z{l.M: l.Mode.String(), "LEAlt": r.ACMEClients[0].LEConf[args[0]].LEAlt}.Informational()
+		l.Z{l.M: l.Mode.String(), "CN": r.ACMEClients[0].LEConf[args[0]].Certificate.Certificates[0].Subject.CommonName}.Informational()
 
 	case len(*cliConfig) != 0: //
-		l.Mode.Set(_acmeCLI)
+		l.CLI.Set()
 
 		switch {
-		case l.FlagIsFlagExist(l.Verbosity.Name()):
-			_ = l.Verbosity.SetString(*cliVerbosity)
-			fallthrough
 		case l.FlagIsFlagExist(l.DryRun.Name()):
 			l.DryRun.Set(*cliDryRun)
+			fallthrough
+		case l.FlagIsFlagExist(l.Verbosity.Name()):
+			l.Verbosity.Set(*cliVerbosity)
 			fallthrough
 		default:
 		}
@@ -181,7 +181,7 @@ func (r *xmlConf) load() (err error) {
 		case err != nil:
 			return
 		}
-		switch err = vfsDB.CopyFromFS2VFS(cliConfigFile); {
+		switch err = vfsDB.CopyFromFS(cliConfigFile); {
 		case err != nil:
 			return
 		}
@@ -194,15 +194,16 @@ func (r *xmlConf) load() (err error) {
 			return
 		}
 
-		_ = l.Verbosity.SetString(r.Daemon.Verbosity)
-		l.DryRun.Set(r.Daemon.DryRun)
 		l.Name.Set(r.Daemon.Name)
+		l.Config.Set(cliConfigFile)
+		l.DryRun.Set(r.Daemon.DryRun)
+		l.Verbosity.Set(r.Daemon.Verbosity)
 		switch {
-		case l.FlagIsFlagExist(l.Verbosity.Name()):
-			_ = l.Verbosity.SetString(*cliVerbosity)
-			fallthrough
 		case l.FlagIsFlagExist(l.DryRun.Name()):
 			l.DryRun.Set(*cliDryRun)
+			fallthrough
+		case l.FlagIsFlagExist(l.Verbosity.Name()):
+			l.Verbosity.Set(*cliVerbosity)
 			fallthrough
 		default:
 		}
@@ -211,7 +212,7 @@ func (r *xmlConf) load() (err error) {
 			vfsDB.List[b.Name] = b.Path
 			b.LEConf = make(map[string]*leConf)
 		}
-		switch err = vfsDB.CopyFS2VFS(); {
+		switch err = vfsDB.LoadFromFS(); {
 		case err != nil:
 			return
 		}

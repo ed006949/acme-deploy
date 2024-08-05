@@ -25,7 +25,7 @@ func (r *VFSDB) MustReadlink(name string) string {
 	}
 }
 
-func (r *VFSDB) CopyFS2VFS() (err error) {
+func (r *VFSDB) LoadFromFS() (err error) {
 	for a, b := range r.List {
 		switch r.List[a], err = filepath.Abs(b); {
 		case err != nil:
@@ -34,7 +34,7 @@ func (r *VFSDB) CopyFS2VFS() (err error) {
 	}
 
 	for _, b := range r.List {
-		switch err = r.CopyFromFS2VFS(b); {
+		switch err = r.CopyFromFS(b); {
 		case err != nil:
 			return
 		}
@@ -43,7 +43,7 @@ func (r *VFSDB) CopyFS2VFS() (err error) {
 	return
 }
 
-func (r *VFSDB) CopyFromFS2VFS(name string) (err error) {
+func (r *VFSDB) CopyFromFS(name string) (err error) {
 	var (
 		fn = func(name string, dirEntry fs.DirEntry, fnErr error) (err error) {
 			switch {
@@ -94,7 +94,7 @@ func (r *VFSDB) CopyFromFS2VFS(name string) (err error) {
 				case err != nil:
 					return
 				}
-				switch err = r.CopyFileFS2VFS(name); {
+				switch err = r.CopyFileFromFS(name); {
 				case err != nil:
 					return
 				}
@@ -206,47 +206,48 @@ func (r *VFSDB) WriteVFS() (err error) {
 				}
 
 			case 0:
-				var (
-					isExist bool
-					dataVFS []byte
-					dataFS  []byte
-				)
-				switch isExist, err = io_fs.IsExist(name); {
-				case !isExist:
-					// read file
-					switch dataVFS, err = r.VFS.ReadFile(name); {
-					case err != nil:
-						return
-					}
-					// write file
-					switch err = os.WriteFile(name, dataVFS, avfs.DefaultFilePerm); {
-					case err != nil:
-						return
-					}
-					return
-				}
-
-				// read files
-				switch dataVFS, err = r.VFS.ReadFile(name); {
-				case err != nil:
-					return
-				}
-				switch dataFS, err = os.ReadFile(name); {
+				switch err = r.CompareAndCopyFileToFS(name); {
 				case err != nil:
 					return
 				}
 
-				// compare files
-				switch {
-				case bytes.Equal(dataVFS, dataFS):
-					return
-				}
+				// var (
+				// 	isExist bool
+				// 	dataVFS []byte
+				// 	dataFS  []byte
+				// )
+				// switch isExist, err = io_fs.IsExist(name); {
+				// case !isExist:
+				// 	switch err = r.CopyFileToFS(name); {
+				// 	case err != nil:
+				// 		return
+				// 	}
+				//
+				// 	return
+				// }
+				//
+				// // read files
+				// switch dataVFS, err = r.VFS.ReadFile(name); {
+				// case err != nil:
+				// 	return
+				// }
+				// switch dataFS, err = os.ReadFile(name); {
+				// case err != nil:
+				// 	return
+				// }
+				//
+				// // compare files
+				// switch {
+				// case bytes.Equal(dataVFS, dataFS):
+				// 	return
+				// }
+				//
+				// // write file
+				// switch err = os.WriteFile(name, dataVFS, avfs.DefaultFilePerm); {
+				// case err != nil:
+				// 	return
+				// }
 
-				// write file
-				switch err = os.WriteFile(name, dataVFS, avfs.DefaultFilePerm); {
-				case err != nil:
-					return
-				}
 				return
 
 			default:
@@ -265,7 +266,7 @@ func (r *VFSDB) WriteVFS() (err error) {
 	return
 }
 
-func (r *VFSDB) CopyFileFS2VFS(name string) (err error) {
+func (r *VFSDB) CopyFileFromFS(name string) (err error) {
 	var (
 		data []byte
 	)
@@ -278,6 +279,46 @@ func (r *VFSDB) CopyFileFS2VFS(name string) (err error) {
 	case err != nil:
 		return
 	}
+	return
+}
+func (r *VFSDB) CopyFileToFS(name string) (err error) {
+	var (
+		data []byte
+	)
+
+	switch data, err = r.VFS.ReadFile(name); {
+	case err != nil:
+		return
+	}
+	switch err = os.WriteFile(name, data, avfs.DefaultFilePerm); {
+	case err != nil:
+		return
+	}
+	return
+}
+func (r *VFSDB) CompareAndCopyFileToFS(name string) (err error) {
+	var (
+		dataVFS []byte
+		dataFS  []byte
+	)
+
+	switch dataVFS, err = r.VFS.ReadFile(name); {
+	case err != nil:
+		return
+	}
+	switch dataFS, err = os.ReadFile(name); {
+	case errors.Is(err, fs.ErrNotExist):
+	case err != nil:
+		return
+	case bytes.Equal(dataVFS, dataFS):
+		return
+	}
+
+	switch err = os.WriteFile(name, dataVFS, avfs.DefaultFilePerm); {
+	case err != nil:
+		return
+	}
+
 	return
 }
 

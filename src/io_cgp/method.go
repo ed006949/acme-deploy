@@ -90,7 +90,7 @@ func (r *Token) Command(inbound *Command) (outbound []string, err error) {
 				payload += inbound.Domain_Administration.UPDATEDOMAINSETTINGS.compile()
 
 				switch {
-				case l.DryRun.Value():
+				case l.DryRun.Flag():
 					o["payloadLen"] = len(payload)
 					payload = ""
 				}

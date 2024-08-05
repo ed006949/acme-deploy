@@ -1,15 +1,43 @@
 package l
 
-const (
-	Name      name      = "name"      // receiver hook
-	Config    config    = "config"    // receiver hook
-	DryRun    dryRun    = "dry-run"   // receiver hook
-	Verbosity verbosity = "verbosity" // receiver hook
-	Mode      mode      = "mode"      // receiver hook
+import (
+	"github.com/rs/zerolog"
 )
 
 const (
 	E = "error"   // zerolog.ErrorFieldName hook
 	M = "message" // zerolog.MessageFieldName hook
-	T = "type"    // zerolog.MessageFieldName hook
+	T = "type"    // zerolog.TypeFieldName hook
+)
+
+const (
+	Name      nameType      = "name"
+	Config    configType    = "config"
+	DryRun    dryRunType    = "dry-run"
+	Verbosity verbosityType = "verbosity"
+	Mode      modeType      = "mode"
+)
+const (
+	NoDryRun dryRunFlag = false
+	DoDryRun dryRunFlag = true
+)
+const (
+	Init modeValue = iota
+	Deploy
+	CLI
+	Daemon
+)
+const (
+	Emergency     = verbosityLevel(zerolog.FatalLevel)
+	Alert         = verbosityLevel(zerolog.FatalLevel)
+	Critical      = verbosityLevel(zerolog.FatalLevel)
+	Error         = verbosityLevel(zerolog.ErrorLevel)
+	Warning       = verbosityLevel(zerolog.WarnLevel)
+	Notice        = verbosityLevel(zerolog.InfoLevel)
+	Informational = verbosityLevel(zerolog.InfoLevel)
+	Debug         = verbosityLevel(zerolog.DebugLevel)
+	Trace         = verbosityLevel(zerolog.TraceLevel)
+	Panic         = verbosityLevel(zerolog.PanicLevel)
+	Quiet         = verbosityLevel(zerolog.NoLevel)
+	Disabled      = verbosityLevel(zerolog.Disabled)
 )

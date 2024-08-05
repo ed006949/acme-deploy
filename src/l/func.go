@@ -2,14 +2,8 @@ package l
 
 import (
 	"flag"
-	"fmt"
 	"net/url"
-	"os"
 	"strings"
-	"time"
-
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 // func Emergency(e Z)     { log.Fatal().EmbedObject(e).Send() }
@@ -22,91 +16,17 @@ import (
 // func Debug(e Z)         { log.Debug().EmbedObject(e).Send() }
 // func Trace(e Z)         { log.Trace().EmbedObject(e).Send() }
 // func Panic(e Z)         { log.Panic().EmbedObject(e).Send() }
-
-func setName(inbound string) {
-	switch {
-	case len(inbound) == 0:
-		return
-	}
-
-	pControl.name = inbound
-}
-func setConfig(inbound string) {
-	switch {
-	case len(inbound) == 0:
-		return
-	}
-
-	pControl.config = inbound
-}
-func setDryRun(inbound bool) {
-	pControl.dryRun = inbound
-
-	switch {
-	case DryRun.Value():
-		zerolog.CallerSkipFrameCount += 2
-		Z{}.Notice()
-		zerolog.CallerSkipFrameCount -= 2
-	}
-}
-func setVerbosity(inbound zerolog.Level) {
-	pControl.verbosity = inbound
-	zerolog.SetGlobalLevel(pControl.verbosity) // .!. how it works ....
-	log.Logger = log.Level(pControl.verbosity).With().Timestamp().Caller().Logger().Output(zerolog.ConsoleWriter{
-		Out:              os.Stderr,
-		NoColor:          false,
-		TimeFormat:       time.RFC3339,
-		FormatFieldValue: func(i interface{}) string { return fmt.Sprintf("\"%s\"", i) },
-	})
-}
-func setMode(inbound string) {
-	switch {
-	case len(inbound) == 0:
-		return
-	}
-
-	pControl.mode = inbound
-
-	zerolog.CallerSkipFrameCount += 2
-	Z{M: Mode.Value()}.Notice()
-	zerolog.CallerSkipFrameCount -= 2
-}
-
-func setStringDryRun(inbound string) error {
-	switch {
-	case len(inbound) == 0:
-		return ENODATA
-	}
-
-	switch value, err := ParseBool(inbound); {
-	case err != nil:
-		return err
-	default:
-		zerolog.CallerSkipFrameCount += 2
-		DryRun.Set(value)
-		zerolog.CallerSkipFrameCount += 2
-		return nil
-	}
-}
-func setStringVerbosity(inbound string) error {
-	switch {
-	case len(inbound) == 0:
-		return ENODATA
-	}
-
-	switch value, err := zerolog.ParseLevel(inbound); {
-	case err != nil:
-		return err
-	default:
-		zerolog.CallerSkipFrameCount += 2
-		Verbosity.Set(value)
-		zerolog.CallerSkipFrameCount -= 2
-		return nil
-	}
-}
+// func Quiet(e Z)         {}
+// func Disabled(e Z)      {}
 
 func ParseBool(inbound string) (bool, error) {
-	switch strings.ToLower(inbound) {
+	switch {
+	case len(inbound) == 0:
+		return false, ENODATA
+	}
+	inbound = strings.ToLower(inbound)
+
+	switch inbound {
 	case "1", "t", "y", "true", "yes", "on":
 		return true, nil
 	case "0", "f", "n", "false", "no", "off":
