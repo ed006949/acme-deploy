@@ -72,9 +72,9 @@ func (r *xmlConf) load() (err error) {
 			}),
 		}
 
-		cliConfig    = flag.String(l.Config.Name(), os.Getenv("ACME_DEPLOY_CONFIG"), "xml config file")
-		cliVerbosity = flag.String(l.Verbosity.Name(), os.Getenv("ACME_DEPLOY_VERBOSITY"), "verbosity level, overrides config")
-		cliDryRun    = flag.Bool(l.DryRun.Name(), l.StripErr1(l.ParseBool(os.Getenv("ACME_DEPLOY_DRYRUN"))), "dry run, overrides config")
+		cliConfig    = flag.String(l.Config.Name(), os.Getenv(l.Config.EnvName()), l.Config.EnvDescription())
+		cliDryRun    = flag.Bool(l.DryRun.Name(), l.StripErr1(l.ParseBool(os.Getenv(l.DryRun.EnvName()))), l.DryRun.EnvDescription())
+		cliVerbosity = flag.String(l.Verbosity.Name(), os.Getenv(l.Verbosity.EnvName()), l.Verbosity.EnvDescription())
 
 		// cliLEHome          = flag.String("home", os.Getenv("ACME_HOME_DIR"), "ACME_HOME_DIR")
 		// cliLECertHome      = flag.String("cert-home", os.Getenv("ACME_CERT_HOME_DIR"), "ACME_CERT_HOME_DIR")
@@ -83,7 +83,7 @@ func (r *xmlConf) load() (err error) {
 		// cliLECAPath        = flag.String("capath", os.Getenv("ACME_CHAIN_FILE"), "ACME_CHAIN_FILE")
 		// cliLEFullChainPath = flag.String("fullchainpath", os.Getenv("ACME_FULLCHAIN_FILE"), "ACME_FULLCHAIN_FILE")
 
-		cliCGP = flag.String("cgp", os.Getenv("ACME_DEPLOY_CGP"), "CGP HTTPU URL")
+		cliCGP = flag.String("cgp", os.Getenv(l.EnvName("CGP")), "CGP HTTPU URL ("+l.EnvName("CGP")+")")
 	)
 
 	flag.Parse()
@@ -105,10 +105,10 @@ func (r *xmlConf) load() (err error) {
 			args = append(args, name)
 		}
 
-		r.Daemon = &xmlConfDaemon{
-			Name:      l.Mode.String(),
-			Verbosity: l.Verbosity.String(),
-			DryRun:    l.DryRun.Flag(),
+		r.Daemon = &l.ControlType{
+			Name:      l.Name.Value(),
+			Verbosity: l.Verbosity.Value(),
+			DryRun:    l.DryRun.Value(),
 		}
 		r.ACMEClients = []*xmlConfACMEClients{
 			{

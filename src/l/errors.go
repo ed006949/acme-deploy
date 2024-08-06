@@ -23,7 +23,7 @@ var errorDescription = [...]string{
 	EINVAL:         "invalid argument",
 	ENODATA:        "not data",
 	ENEDATA:        "not enough data",
-	ENOCONF:        "not config",
+	ENOCONF:        "no config",
 	EUEDATA:        "unexpected data",
 	EINVALRESPONSE: "invalid response",
 }

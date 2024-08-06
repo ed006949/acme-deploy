@@ -1,12 +1,12 @@
 package l
 
 var (
-	control = &controlType{
-		name:      "",
-		config:    "",
-		dryRun:    NoDryRun,
-		verbosity: Informational,
-		mode:      Init,
+	control = &ControlType{
+		Name:      "",
+		Config:    "",
+		DryRun:    DoDryRun,
+		Mode:      Init,
+		Verbosity: Informational,
 	}
 )
 var (

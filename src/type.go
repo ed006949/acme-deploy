@@ -5,11 +5,12 @@ import (
 
 	"acme-deploy/src/io_cgp"
 	"acme-deploy/src/io_crypto"
+	"acme-deploy/src/l"
 )
 
 type xmlConf struct {
 	XMLName     xml.Name              `xml:"conf"`
-	Daemon      *xmlConfDaemon        `xml:"daemon,omitempty"`
+	Daemon      *l.ControlType        `xml:"daemon,omitempty"`
 	ACMEClients []*xmlConfACMEClients `xml:"acme-clients>acme-client,omitempty"`
 	CGPs        []*xmlConfCGPs        `xml:"cgps>cgp,omitempty"`
 	LEConfMap   map[string]*leConf    `xml:"-"`

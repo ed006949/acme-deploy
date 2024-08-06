@@ -19,6 +19,32 @@ import (
 // func Quiet(e Z)         {}
 // func Disabled(e Z)      {}
 
+func envDescription(inbound any) (outbound string) {
+	switch value := inbound.(type) {
+	case nameType:
+		return "daemon name (" + value.EnvName() + ")"
+	case configType:
+		return "config file (" + value.EnvName() + ")"
+	case dryRunType:
+		return "dry-run flag, overrides config (" + value.EnvName() + ")"
+	case verbosityType:
+		return "verbosity level, overrides config (" + value.EnvName() + ")"
+	case modeType:
+		return "operational mode (" + value.EnvName() + ")"
+	default:
+		return
+	}
+}
+
+func EnvName(inbound string) (outbound string) {
+	return strings.ReplaceAll(
+		strings.ToUpper(
+			Name.String()+"_"+inbound),
+		"-",
+		"_",
+	)
+}
+
 func ParseBool(inbound string) (bool, error) {
 	switch {
 	case len(inbound) == 0:
@@ -64,13 +90,8 @@ func IndexSlice[S ~[]E, E comparable, M map[E]struct{}](inbound S) (outbound M) 
 	return
 }
 
-func StripErr(err error) {
-	// Debug.E(err, nil)
-}
-func StripErr1[E comparable](inbound E, err error) (outbound E) {
-	// Debug.E(err, nil)
-	return inbound
-}
+func StripErr(err error)                                 {}
+func StripErr1[E any](inbound E, err error) (outbound E) { return inbound }
 
 func FlagIsFlagExist(name string) (outbound bool) {
 	flag.Visit(func(fn *flag.Flag) {

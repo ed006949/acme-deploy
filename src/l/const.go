@@ -14,8 +14,8 @@ const (
 	Name      nameType      = "name"
 	Config    configType    = "config"
 	DryRun    dryRunType    = "dry-run"
-	Verbosity verbosityType = "verbosity"
 	Mode      modeType      = "mode"
+	Verbosity verbosityType = "verbosity"
 )
 const (
 	NoDryRun dryRunFlag = false

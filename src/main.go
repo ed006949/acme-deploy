@@ -11,6 +11,8 @@ import (
 )
 
 func main() {
+	l.Name.Set("acme-deploy")
+
 	var (
 		err       error
 		xmlConfig = new(xmlConf)
