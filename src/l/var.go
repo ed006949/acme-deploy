@@ -1,7 +1,7 @@
 package l
 
 var (
-	control = &controlStruct{
+	control = &controlType{
 		name:      "",
 		config:    "",
 		dryRun:    NoDryRun,

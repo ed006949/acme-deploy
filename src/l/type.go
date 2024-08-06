@@ -18,7 +18,7 @@ type dryRunFlag bool
 type modeValue int
 type verbosityLevel zerolog.Level
 
-type controlStruct struct {
+type controlType struct {
 	name      nameValue
 	config    configValue
 	dryRun    dryRunFlag

@@ -103,30 +103,38 @@ func (r dryRunFlag) String() string           { return dryRunDescription[r] }   
 func (r modeValue) String() string            { return modeDescription[r] }        // Package Flag description
 func (r verbosityLevel) String() string       { return zerolog.Level(r).String() } // Package Flag description
 
-func (r controlStruct) set(inboundKey any, inboundValue any) {
+func (r *controlType) set(inboundKey any, inboundValue any) {
 	switch inboundKey.(type) {
 	case nameType:
 		switch value := inboundValue.(type) {
 		case nameValue:
-			control.name = value
+			r.name = value
 		case string:
-			control.name = nameValue(value)
+			switch {
+			case len(value) == 0:
+				return
+			}
+			r.name = nameValue(value)
 		}
 
 	case configType:
 		switch value := inboundValue.(type) {
 		case configValue:
-			control.config = value
+			r.config = value
 		case string:
-			control.config = configValue(value)
+			switch {
+			case len(value) == 0:
+				return
+			}
+			r.config = configValue(value)
 		}
 
 	case dryRunType:
 		switch value := inboundValue.(type) {
 		case dryRunFlag:
-			control.dryRun = value
+			r.dryRun = value
 		case bool:
-			control.dryRun = dryRunFlag(value)
+			r.dryRun = dryRunFlag(value)
 
 		case string:
 			switch {
@@ -136,18 +144,18 @@ func (r controlStruct) set(inboundKey any, inboundValue any) {
 			value = strings.ToLower(value)
 			switch value {
 			case "1", "t", "y", "true", "yes", "on":
-				control.dryRun = true
+				r.dryRun = true
 			case "0", "f", "n", "false", "no", "off":
-				control.dryRun = false
+				r.dryRun = false
 			}
 		}
 
 	case modeType:
 		switch value := inboundValue.(type) {
 		case modeValue:
-			control.mode = value
+			r.mode = value
 		case int:
-			control.mode = modeValue(value)
+			r.mode = modeValue(value)
 
 		case string:
 			switch {
@@ -158,7 +166,7 @@ func (r controlStruct) set(inboundKey any, inboundValue any) {
 			for a, b := range modeDescription {
 				switch {
 				case value == b:
-					control.mode = a
+					r.mode = a
 					return
 				}
 			}
@@ -167,12 +175,12 @@ func (r controlStruct) set(inboundKey any, inboundValue any) {
 	case verbosityType:
 		switch value := inboundValue.(type) {
 		case verbosityLevel:
-			control.verbosity = value
+			r.verbosity = value
 		case int8:
-			control.verbosity = verbosityLevel(value)
+			r.verbosity = verbosityLevel(value)
 
 		case zerolog.Level:
-			control.verbosity = verbosityLevel(value)
+			r.verbosity = verbosityLevel(value)
 
 		case string:
 			switch {
@@ -184,12 +192,12 @@ func (r controlStruct) set(inboundKey any, inboundValue any) {
 			case err != nil:
 				return
 			default:
-				control.verbosity = verbosityLevel(interim)
+				r.verbosity = verbosityLevel(interim)
 			}
 		}
 
-		zerolog.SetGlobalLevel(control.verbosity.Level()) // .!. how it works ....
-		log.Logger = log.Level(control.verbosity.Level()).With().Timestamp().Caller().Logger().Output(zerolog.ConsoleWriter{
+		zerolog.SetGlobalLevel(r.verbosity.Level()) // .!. how it works ....
+		log.Logger = log.Level(r.verbosity.Level()).With().Timestamp().Caller().Logger().Output(zerolog.ConsoleWriter{
 			Out:              os.Stderr,
 			NoColor:          false,
 			TimeFormat:       time.RFC3339,
