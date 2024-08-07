@@ -72,10 +72,6 @@ func (r *xmlConf) load() (err error) {
 			}),
 		}
 
-		cliConfig    = flag.String(l.Config.Name(), os.Getenv(l.Config.EnvName()), l.Config.EnvDescription())
-		cliDryRun    = flag.Bool(l.DryRun.Name(), l.StripErr1(l.ParseBool(os.Getenv(l.DryRun.EnvName()))), l.DryRun.EnvDescription())
-		cliVerbosity = flag.String(l.Verbosity.Name(), os.Getenv(l.Verbosity.EnvName()), l.Verbosity.EnvDescription())
-
 		// cliLEHome          = flag.String("home", os.Getenv("ACME_HOME_DIR"), "ACME_HOME_DIR")
 		// cliLECertHome      = flag.String("cert-home", os.Getenv("ACME_CERT_HOME_DIR"), "ACME_CERT_HOME_DIR")
 		// cliLECertPath      = flag.String("certpath", os.Getenv("ACME_CERT_FILE"), "ACME_CERT_FILE")
@@ -85,8 +81,7 @@ func (r *xmlConf) load() (err error) {
 
 		cliCGP = flag.String("cgp", os.Getenv(l.EnvName("CGP")), "CGP HTTPU URL ("+l.EnvName("CGP")+")")
 	)
-
-	flag.Parse()
+	l.InitCLI()
 
 	r.LEConfMap = make(map[string]*leConf)
 
@@ -159,25 +154,15 @@ func (r *xmlConf) load() (err error) {
 		l.Z{l.M: l.Mode.String(), "LEAlt": r.ACMEClients[0].LEConf[args[0]].LEAlt}.Informational()
 		l.Z{l.M: l.Mode.String(), "CN": r.ACMEClients[0].LEConf[args[0]].Certificate.Certificates[0].Subject.CommonName}.Informational()
 
-	case len(*cliConfig) != 0: //
+	case len(l.Config.String()) != 0: //
 		l.CLI.Set()
-
-		switch {
-		case l.FlagIsFlagExist(l.DryRun.Name()):
-			l.DryRun.Set(*cliDryRun)
-			fallthrough
-		case l.FlagIsFlagExist(l.Verbosity.Name()):
-			l.Verbosity.Set(*cliVerbosity)
-			fallthrough
-		default:
-		}
 
 		var (
 			cliConfigFile string
 			data          []byte
 		)
 
-		switch cliConfigFile, err = filepath.Abs(*cliConfig); {
+		switch cliConfigFile, err = filepath.Abs(l.Config.String()); {
 		case err != nil:
 			return
 		}
@@ -192,20 +177,6 @@ func (r *xmlConf) load() (err error) {
 		switch err = xml.Unmarshal(data, r); {
 		case err != nil:
 			return
-		}
-
-		l.Name.Set(r.Daemon.Name)
-		l.Config.Set(cliConfigFile)
-		l.DryRun.Set(r.Daemon.DryRun)
-		l.Verbosity.Set(r.Daemon.Verbosity)
-		switch {
-		case l.FlagIsFlagExist(l.DryRun.Name()):
-			l.DryRun.Set(*cliDryRun)
-			fallthrough
-		case l.FlagIsFlagExist(l.Verbosity.Name()):
-			l.Verbosity.Set(*cliVerbosity)
-			fallthrough
-		default:
 		}
 
 		for _, b := range r.ACMEClients {

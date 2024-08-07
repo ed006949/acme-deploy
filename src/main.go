@@ -12,6 +12,7 @@ import (
 
 func main() {
 	l.Name.Set("acme-deploy")
+	l.CLI.Set()
 
 	var (
 		err       error
