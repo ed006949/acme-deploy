@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/avfs/avfs"
-	"github.com/avfs/avfs/idm/dummyidm"
 	"github.com/avfs/avfs/vfs/memfs"
 	"github.com/go-ini/ini"
 
@@ -64,11 +63,11 @@ func (r *xmlConf) load() (err error) {
 		vfsDB = &io_vfs.VFSDB{
 			List: make(map[string]string),
 			VFS: memfs.NewWithOptions(&memfs.Options{
-				Idm:        dummyidm.NotImplementedIdm,
+				Idm:        avfs.NotImplementedIdm,
 				User:       nil,
 				Name:       "",
 				OSType:     avfs.CurrentOSType(),
-				SystemDirs: false,
+				SystemDirs: nil,
 			}),
 		}
 
