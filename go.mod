@@ -3,7 +3,7 @@ module acme-deploy
 go 1.22.5
 
 require (
-	github.com/ProtonMail/go-crypto v1.1.5
+	github.com/ProtonMail/go-crypto v1.1.6
 	github.com/avfs/avfs v0.35.0
 	github.com/fatih/structs v1.1.0
 	github.com/go-git/go-git/v5 v5.13.2
