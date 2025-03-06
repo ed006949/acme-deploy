@@ -39,7 +39,6 @@ func (r *VFSDB) LoadFromFS() (err error) {
 			return
 		}
 	}
-	// test
 
 	return
 }
