@@ -61,7 +61,6 @@ func (r *VFSDB) CopyFromFS(name string) (err error) {
 			case fs.ModeSymlink:
 				var (
 					target string
-					data   []byte
 				)
 
 				switch target, err = os.Readlink(name); {
@@ -74,17 +73,8 @@ func (r *VFSDB) CopyFromFS(name string) (err error) {
 					return
 				}
 
-				// FIXME implement fs.DirEntry Type() check in case of symlink->symlink / symlink->dir, etc ....
-				switch err = r.VFS.MkdirAll(io_fs.Dir(target), avfs.DefaultDirPerm); {
-				case err != nil:
-					return
-				}
-
-				switch data, err = os.ReadFile(name); {
-				case err != nil:
-					return
-				}
-				switch err = r.VFS.WriteFile(target, data, avfs.DefaultFilePerm); {
+				// TODO "What could have gone wrong?!"
+				switch err = r.CopyFromFS(filepath.Join(filepath.Dir(name), target)); {
 				case err != nil:
 					return
 				}

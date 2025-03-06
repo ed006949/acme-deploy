@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/xml"
 	"errors"
 	"flag"
@@ -32,7 +31,8 @@ func (r *leConf) load(vfsDB *io_vfs.VFSDB, name string) (err error) {
 		return
 	}
 
-	data = bytes.ReplaceAll(data, []byte("/var/etc/acme-client/"), []byte(vfsDB.List["acme-client"]+"/"))
+	// for testing
+	// data = bytes.ReplaceAll(data, []byte("/var/etc/acme-client/"), []byte(vfsDB.List["acme-client"]+"/"))
 
 	switch err = ini.MapTo(r, data); {
 	case err != nil:

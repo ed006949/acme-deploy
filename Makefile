@@ -24,7 +24,8 @@ commit: status
 #
 ifneq ($(shell git status --short),)
 	git add .
-	git commit -m "Makefile commit (${DATE})"
+#	git commit -m "Makefile commit (${DATE})"
+	git commit --no-edit
 	git push
 endif
 
@@ -105,6 +106,7 @@ init-init-init-init:	clean
 	-gh repo delete ${NAME} --yes
 	-rm -Rfv ./.git
 	git init
+	oco hook set
 	git config commit.gpgSign false
 	gh repo create ${NAME} --private --source=.
 #	git config --add --bool push.autoSetupRemote true
@@ -114,6 +116,7 @@ init-init-init-init:	clean
 #endif
 	git add .
 	git commit -m "Makefile initial commit (${DATE})"
+#	git commit --no-edit
 	git push --set-upstream origin master
 #	git push
 	go mod init ${TARGET}
@@ -121,4 +124,5 @@ init-init-init-init:	clean
 	go mod tidy
 	git add .
 	git commit -m "Makefile initial update (${DATE})"
+#	git commit --no-edit
 	git push

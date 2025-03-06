@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
 
 	"github.com/fatih/structs"
@@ -17,7 +16,6 @@ func (r *Token) command(payload string) (outbound []string, err error) {
 		request  *http.Request
 		response *http.Response
 		interim  = *r.URL
-		delim    = regexp.MustCompile(`[,\(\)]`)
 		buffer   = new(bytes.Buffer)
 	)
 
@@ -48,7 +46,7 @@ func (r *Token) command(payload string) (outbound []string, err error) {
 	}
 
 	for _, b := range strings.Fields(buffer.String()) {
-		for _, d := range delim.Split(b, -1) {
+		for _, d := range re_output_delim.Split(b, -1) {
 			switch {
 			case len(d) == 0:
 				continue
