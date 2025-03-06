@@ -87,7 +87,6 @@ func (r *xmlConf) load() (err error) {
 	switch {
 	case len(flag.Args()) == 5:
 		l.Deploy.Set()
-		// test
 
 		var (
 			args = flag.Args()[:1]

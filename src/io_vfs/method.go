@@ -50,7 +50,7 @@ func (r *VFSDB) CopyFromFS(name string) (err error) {
 			case fnErr != nil:
 				return fnErr
 			}
-			// test
+
 			switch _, err = r.VFS.Lstat(name); {
 			case errors.Is(err, fs.ErrNotExist): //							not exist
 			case err != nil: //												error
