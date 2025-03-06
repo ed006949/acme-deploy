@@ -83,9 +83,17 @@ func (r *VFSDB) CopyFromFS(name string) (err error) {
 				}
 
 				// "What could have gone wrong?!"
-				switch err = r.CopyFromFS(filepath.Join(filepath.Dir(name), target)); {
-				case err != nil:
-					return
+				switch filepath.IsAbs(target) { // what is wrong with filepath.Abs() ?
+				case true:
+					switch err = r.CopyFromFS(target); {
+					case err != nil:
+						return
+					}
+				case false:
+					switch err = r.CopyFromFS(filepath.Join(filepath.Dir(name), target)); {
+					case err != nil:
+						return
+					}
 				}
 
 			case 0:
