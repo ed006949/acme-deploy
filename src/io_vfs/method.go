@@ -51,6 +51,15 @@ func (r *VFSDB) CopyFromFS(name string) (err error) {
 				return fnErr
 			}
 
+			switch _, err = r.VFS.Lstat(name); {
+			case errors.Is(err, fs.ErrNotExist): //							not exist
+			case err != nil: //												error
+				return err
+			default: // 													already exists
+				l.Z{l.E: fs.ErrExist, "dirEntry": name, l.M: "skip entry"}.Warning()
+				return nil
+			}
+
 			switch dirEntry.Type() {
 			case fs.ModeDir:
 				switch err = r.VFS.MkdirAll(name, avfs.DefaultDirPerm); {
@@ -73,14 +82,14 @@ func (r *VFSDB) CopyFromFS(name string) (err error) {
 					return
 				}
 
-				// TODO "What could have gone wrong?!"
+				// "What could have gone wrong?!"
 				switch err = r.CopyFromFS(filepath.Join(filepath.Dir(name), target)); {
 				case err != nil:
 					return
 				}
 
 			case 0:
-				switch err = r.VFS.MkdirAll(io_fs.Dir(name), avfs.DefaultDirPerm); {
+				switch err = r.VFS.MkdirAll(filepath.Dir(name), avfs.DefaultDirPerm); {
 				case err != nil:
 					return
 				}
@@ -200,43 +209,6 @@ func (r *VFSDB) WriteVFS() (err error) {
 				case err != nil:
 					return
 				}
-
-				// var (
-				// 	isExist bool
-				// 	dataVFS []byte
-				// 	dataFS  []byte
-				// )
-				// switch isExist, err = io_fs.IsExist(name); {
-				// case !isExist:
-				// 	switch err = r.CopyFileToFS(name); {
-				// 	case err != nil:
-				// 		return
-				// 	}
-				//
-				// 	return
-				// }
-				//
-				// // read files
-				// switch dataVFS, err = r.VFS.ReadFile(name); {
-				// case err != nil:
-				// 	return
-				// }
-				// switch dataFS, err = os.ReadFile(name); {
-				// case err != nil:
-				// 	return
-				// }
-				//
-				// // compare files
-				// switch {
-				// case bytes.Equal(dataVFS, dataFS):
-				// 	return
-				// }
-				//
-				// // write file
-				// switch err = os.WriteFile(name, dataVFS, avfs.DefaultFilePerm); {
-				// case err != nil:
-				// 	return
-				// }
 
 				return
 

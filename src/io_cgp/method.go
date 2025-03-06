@@ -116,7 +116,7 @@ func (r *Token) Command(inbound *Command) (outbound []string, err error) {
 			return nil, EComSet
 		}
 
-		o[l.M] = "do"
+		o[l.M] = "CGP command"
 		o.Debug()
 		switch outbound, err = r.command(payload); {
 		case err != nil:

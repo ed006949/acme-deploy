@@ -4,12 +4,7 @@ import (
 	"errors"
 	"io/fs"
 	"os"
-	"path/filepath"
 )
-
-func Dir(path string) string {
-	return filepath.Dir(path)
-}
 
 func IsExist(inbound string) (outbound bool, err error) {
 	switch _, err = os.Stat(inbound); {
