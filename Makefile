@@ -2,6 +2,8 @@ DATE		=	`date`
 GIT_STATUS	=	`git status --short`
 
 all:	commit
+all:	vet
+all:	race
 all:	build
 all:	status
 
@@ -63,6 +65,11 @@ test:
 update:
 	go get -u ./...
 	go mod tidy
+
+vet:
+	go vet ./...
+#	go vet -vettool=${HOME}/go/bin/shadow ./...
+#	go vet -vettool=${HOME}/go/bin/waitgroup ./...
 
 include Makefile.local
 
