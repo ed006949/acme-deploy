@@ -83,6 +83,7 @@ func (r *VFSDB) CopyFromFS(name string) (err error) {
 				}
 
 				// what is wrong with filepath.Abs() ?
+				// filepath.Abs() cannot handle relative path such as "../"
 				switch {
 				case !filepath.IsAbs(target):
 					target = filepath.Join(filepath.Dir(name), target)
