@@ -320,33 +320,4 @@ func (r *VFSDB) LoadIniMapTo(v any, source string) (err error) {
 		return
 	}
 	return ini.MapTo(&v, &data)
-
-	// var (
-	// 	dataSet []any
-	// )
-	// for _, b := range source {
-	// 	var (
-	// 		data []byte
-	// 	)
-	// 	switch data, err = r.VFS.ReadFile(b); {
-	// 	case err != nil:
-	// 		return
-	// 	}
-	// 	data = bytes.ReplaceAll(
-	// 		data,
-	// 		[]byte("/var/etc/acme-client/"),
-	// 		[]byte(r.List["acme-client"]+"/"),
-	// 	)
-	// 	dataSet = append(dataSet, data)
-	// }
-	//
-	// switch len(dataSet) {
-	// case 0:
-	// case 1:
-	// 	err = ini.MapTo(v, dataSet[0])
-	// default:
-	// 	err = ini.MapTo(v, dataSet[0], dataSet[1:]...)
-	// }
-	//
-	// return
 }
