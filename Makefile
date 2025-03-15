@@ -92,6 +92,22 @@ gitignore:
 	cat ./.local.gitignore >> ./.gitignore
 
 #
+#
+#
+#
+init_hook:
+	echo "installing hook 'prepare-commit-msg'"
+	echo '#!/bin/sh' > ./.git/hooks/prepare-commit-msg
+	echo '' >> ./.git/hooks/prepare-commit-msg
+	echo 'COMMIT_MSG_FILE=$$1' >> ./.git/hooks/prepare-commit-msg
+	echo 'COMMIT_SOURCE=$$2' >> ./.git/hooks/prepare-commit-msg
+	echo 'SHA1=$$3' >> ./.git/hooks/prepare-commit-msg
+	echo 'OLLAMA_MODEL="mevatron/diffsense:1.5b"' >> ./.git/hooks/prepare-commit-msg
+	echo 'git diff --staged | ollama run "$$OLLAMA_MODEL" | tee -a "$$COMMIT_MSG_FILE"' >> ./.git/hooks/prepare-commit-msg
+	chmod -v +x ./.git/hooks/prepare-commit-msg
+
+#
+
 # init local package
 # > make init_localpackage localpackage=package_name
 #
