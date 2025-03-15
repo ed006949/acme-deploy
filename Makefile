@@ -25,9 +25,14 @@ commit: status
 #ifneq (${GIT_STATUS},)
 #
 ifneq ($(shell git status --short),)
-	git add .
+	@for file in $(shell git status --porcelain | awk '{print $$2}'); do \
+		echo "Committing: $$file"; \
+		git add "$$file"; \
+		git commit --no-edit; \
+	done
+#	git add .
 #	git commit -m "Makefile commit (${DATE})"
-	git commit --no-edit
+#	git commit --no-edit
 	git push
 endif
 
