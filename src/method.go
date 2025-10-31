@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/xml"
 	"errors"
 	"flag"
@@ -32,7 +33,7 @@ func (r *leConf) load(vfsDB *io_vfs.VFSDB, name string) (err error) {
 	}
 
 	// for testing
-	// data = bytes.ReplaceAll(data, []byte("/var/etc/acme-client/"), []byte(vfsDB.List["acme-client"]+"/"))
+	data = bytes.ReplaceAll(data, []byte("/var/etc/acme-client/"), []byte(vfsDB.List["acme-client"]+"/"))
 
 	switch err = ini.MapTo(r, data); {
 	case err != nil:
@@ -199,7 +200,9 @@ func (r *xmlConf) load() (err error) {
 
 						switch dirEntry.Type() {
 						case fs.ModeDir:
+							return
 						case fs.ModeSymlink:
+							return
 						case 0:
 							switch {
 							case strings.HasSuffix(name, ".csr.conf"): // skip CSR config files
@@ -221,6 +224,7 @@ func (r *xmlConf) load() (err error) {
 
 							}
 						default:
+							return
 						}
 
 						return
